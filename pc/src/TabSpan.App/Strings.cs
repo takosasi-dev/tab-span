@@ -1,10 +1,11 @@
-// 画面の文言を Strings.ja.resx から引く(FR-30)。英語の resx はまだ無いので、どの UI のカルチャでも ja を明示して引く。
+// 画面の文言を Strings.resx(日本語。本体の DLL に入る)から引く(FR-30)。英語の resx はまだ無いので、どの UI のカルチャでも ja を明示して引く。
 // XAML からは {local:Str キー} で引く。
+// 既定の言語の置き場を Satellite にすると、WPF の画面の定義(g.resources)まで別の DLL に探しに行き、起動で落ちる(v0.1.1 まで)。
 using System.Globalization;
 using System.Resources;
 using System.Windows.Markup;
 
-[assembly: NeutralResourcesLanguage("ja", UltimateResourceFallbackLocation.Satellite)]
+[assembly: NeutralResourcesLanguage("ja")]
 
 namespace TabSpan.App;
 
