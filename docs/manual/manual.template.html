@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<!-- TabSpan の測定用ツールの取扱説明書。値の穴は docs/manual/data.json で埋める。 -->
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>{{ app.name }} 測定用ツール 取扱説明書</title>
+<style>
+  @page { size: A4; }
+  :root {
+    --ink: #1f2328; --sub: #57606a; --line: #d0d7de; --soft: #f6f8fa;
+    --accent: #0b5cad; --accent-soft: #e8f1fb; --warn: #9a3412; --warn-soft: #fff4e5;
+  }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "BIZ UDPGothic", "Yu Gothic", sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.75; }
+  h1, h2, h3 { line-height: 1.35; }
+  h2 { font-size: 15pt; margin: 0 0 10px; padding: 0 0 6px; border-bottom: 2px solid var(--accent); color: var(--accent); }
+  h3 { font-size: 11.5pt; margin: 18px 0 6px; padding-left: 8px; border-left: 4px solid var(--accent); }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0; padding-left: 1.4em; }
+  li { margin: 2px 0; }
+  code, .mono { font-family: "BIZ UDGothic", "Consolas", monospace; font-size: 9.5pt; background: var(--soft); padding: 0 3px; border-radius: 3px; }
+  pre { font-family: "BIZ UDGothic", "Consolas", monospace; font-size: 8.8pt; line-height: 1.5; background: var(--soft); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; white-space: pre-wrap; word-break: break-all; margin: 6px 0; }
+  table { border-collapse: collapse; width: calc(100% - 1px); margin: 8px 0; font-size: 9.8pt; }
+  th, td { border: 1px solid var(--line); padding: 5px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--soft); white-space: nowrap; }
+  .page { break-after: page; }
+  .mf-page-break { break-after: page; }
+  .note { background: var(--accent-soft); border-left: 4px solid var(--accent); padding: 8px 12px; margin: 10px 0; border-radius: 0 6px 6px 0; }
+  .warn { background: var(--warn-soft); border-left: 4px solid var(--warn); padding: 8px 12px; margin: 10px 0; border-radius: 0 6px 6px 0; }
+  .warn strong { color: var(--warn); }
+  .steps { counter-reset: step; list-style: none; padding-left: 0; }
+  .steps > li { counter-increment: step; position: relative; padding-left: 2.2em; margin: 6px 0; }
+  .steps > li::before { content: counter(step); position: absolute; left: 0; top: 0.1em; width: 1.6em; height: 1.6em; border-radius: 50%; background: var(--accent); color: #fff; font-size: 9pt; text-align: center; line-height: 1.6em; }
+  figure.mf-figure { margin: 10px 0; text-align: center; break-inside: avoid; }
+  figure.mf-figure img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
+  figure.mf-figure.phone img { max-height: 150mm; }
+  figcaption { font-size: 9pt; color: var(--sub); margin-top: 4px; }
+  /* 表紙 */
+  .cover { height: 250mm; display: flex; flex-direction: column; justify-content: center; }
+  .cover .kind { color: var(--accent); font-size: 12pt; letter-spacing: 0.1em; }
+  .cover h1 { font-size: 30pt; margin: 6px 0 4px; }
+  .cover .sub { font-size: 14pt; color: var(--sub); margin-bottom: 28px; }
+  .cover .meta { border-top: 1px solid var(--line); padding-top: 10px; color: var(--sub); font-size: 10pt; }
+  /* 目次 */
+  .toc ol { padding-left: 1.2em; }
+  .toc li { margin: 4px 0; }
+  .muted { color: var(--sub); }
+</style>
+</head>
+<body>
+
+<!-- 1. 表紙(このまま。subtitle だけ data.json で) -->
+<section class="page cover">
+  <div class="kind">取扱説明書</div>
+  <h1>{{ app.name }}</h1>
+  <div class="sub">{{ app.subtitle }}</div>
+  <div class="meta">
+    版 {{ app.version }}(プレリリース) / {{ app.date }}<br>
+    {{ app.repo }}
+  </div>
+</section>
+
+<!-- 2. 目次と、この説明書の前提 -->
+<section class="page toc">
+  <h2>目次</h2>
+  <ol>
+    <li>はじめに(このツールでできること・できないこと)</li>
+    <li>用意する物</li>
+    <li>入れ方</li>
+    <li>使い方</li>
+    <li>結果の読み方</li>
+    <li>困ったとき</li>
+    <li>安全とプライバシー</li>
+    <li>片付け</li>
+    <li>ライセンスと連絡先</li>
+  </ol>
+  <div class="warn">
+    <strong>この説明書は、測定用ツール(Phase 0 の Probe)の物です。</strong><br>
+    {{ app.name }} は、Android の端末を Windows PC の拡張モニターにするソフトとして開発中です。いま配っているのは、設計を決めるための測定用ツールだけで、<strong>まだ PC の画面を端末に映すことはできません</strong>。アプリ本体は、これから作ります。
+  </div>
+  <p class="muted">この説明書の出力の例のうち、PC のモニター名・アダプター名・デバイス ID・証明書の指紋は、すべて架空の値です。端末の型番(dtab d-01J)とデコーダーの名前は実物です。</p>
+</section>
+
+<!-- 1. はじめに -->
+<section>
+  <h2>1. はじめに(このツールでできること・できないこと)</h2>
+  <p>{{ app.name }} は、机の上の Android の端末を、Windows PC の 2 枚目の画面として使うためのソフトです。完成すると、PC が画面を取り込んで H.264 に圧縮し、USB か LAN の TLS で端末へ送り、端末が復号して全画面で映し、触った位置を PC に返す形になります。</p>
+  <p>いまは、その設計を決める前に「この PC とこの端末で、何がどれくらいの速さでできるか」を測る段階(Phase 0)です。この説明書は、そのための測定用ツール 2 つの使い方を書いた物です。</p>
+
+  <h3>測定用ツールは 2 つ</h3>
+  <table>
+    <tr><th>名前</th><th>動く場所</th><th>やること</th></tr>
+    <tr><td>PC の Probe<br><code>TabSpan.Probe.exe</code></td><td>Windows PC(コンソール)</td><td>モニターの一覧、画面の取り込み、H.264 の圧縮、adb の確認、TLS の待ち受け、モニターの取り外し、タッチの注入、時計の表示</td></tr>
+    <tr><td>Android の probe<br>(アプリ名「TabSpan Probe」)</td><td>Android の端末</td><td>端末とデコーダーの調べ物、PC への TLS の接続テスト、置いた映像の復号のテスト</td></tr>
+  </table>
+
+  <h3>できること</h3>
+  <ul>
+    <li>PC のモニターの一覧を見る。モニターを 5 秒取り込んで、フレームが届くかを見る。</li>
+    <li>PC の H.264 のエンコーダーの一覧を見て、実際に 5 秒圧縮してみる。</li>
+    <li>端末から PC へ、USB 経由で TLS 1.2 でつながるかを試す。</li>
+    <li>端末のデコーダーが、どの大きさをどれくらいの速さで復号できるかを測る。</li>
+  </ul>
+
+  <h3>できないこと</h3>
+  <ul>
+    <li>PC の画面を端末に映すこと(アプリ本体がまだ無いため)。</li>
+    <li>端末で触った位置を PC に返すこと。</li>
+    <li>LAN でつなぐこと(TLS のテストは USB の <code>adb reverse</code> 経由だけです)。</li>
+  </ul>
+
+  <div class="note">
+    測定用ツールは、結果を画面に出すだけです。取り込んだ画面・圧縮した映像・結果をファイルに保存せず、127.0.0.1(自分自身)のほかへ通信しません。
+  </div>
+</section>
+
+<div class="mf-page-break"></div>
+
+<!-- 2. 用意する物 -->
+<section>
+  <h2>2. 用意する物</h2>
+  <table>
+    <tr><th>物</th><th>中身</th><th>使う場面</th></tr>
+    <tr><td>Windows PC</td><td>Windows 11(x64)</td><td>PC の Probe</td></tr>
+    <tr><td>.NET 10 SDK</td><td>Microsoft の配布ページから入れる。PC の Probe はビルド済みの物を配っていないので、自分でビルドします</td><td>PC の Probe のビルド</td></tr>
+    <tr><td>Android の端末</td><td>Android 7.0 以上</td><td>Android の probe</td></tr>
+    <tr><td>USB の線</td><td>データを通せる物(充電専用の線では、つながりません)</td><td>APK を入れる、TLS のテスト、映像を置く</td></tr>
+    <tr><td>adb</td><td>Android SDK Platform-Tools に入っている命令。PATH を通しておく(winget で <code>Google.PlatformTools</code> を入れた場合は、その既定の場所も Probe が探します)</td><td>APK を入れる、TLS のテスト、映像を置く、片付け</td></tr>
+    <tr><td>ffmpeg</td><td>試しの映像を作る道具</td><td>復号のテスト</td></tr>
+    <tr><td>(あれば)仮想ディスプレイ</td><td>別に入れた仮想ディスプレイのソフト。{{ app.name }} は入れません</td><td><code>detach</code> / <code>attach</code> を安全に試す</td></tr>
+  </table>
+
+  <h3>端末で USB デバッグを有効にする</h3>
+  <p>adb を使うには、端末の「USB デバッグ」を有効にします。メニューの名前と場所は機種で違います。よくある手順は次のとおりです。</p>
+  <ol class="steps">
+    <li>端末の「設定」→「端末情報」(「タブレット情報」など)を開き、「ビルド番号」を 7 回続けて触ります。「開発者になりました」と出ます。</li>
+    <li>「設定」に増えた「開発者向けオプション」を開き、「USB デバッグ」を有効にします。</li>
+    <li>端末を USB で PC につなぎます。端末に「USB デバッグを許可しますか?」と出たら、PC の指紋を確かめて「許可」を押します。</li>
+    <li>PC の PowerShell で <code>adb devices</code> を打ち、端末が <code>device</code> の状態で出れば準備できています。</li>
+  </ol>
+  <div class="note">USB デバッグを有効にすると、つないだ PC から端末を操作できるようになります。測定が終わったら、<a href="#ch8">8 章</a>の片付けで無効に戻すことを勧めます。</div>
+</section>
+
+<!-- 3. 入れ方 -->
+<section>
+  <h2>3. 入れ方</h2>
+
+  <h3>3.1 Android の probe を入れる</h3>
+  <ol class="steps">
+    <li>ブラウザで {{ app.repo }}/releases/tag/v{{ app.version }} を開き、<code>TabSpan-Probe-v{{ app.version }}-android.apk</code> を PC に保存します。</li>
+    <li>PowerShell で、保存したフォルダに移り、<code>adb install TabSpan-Probe-v{{ app.version }}-android.apk</code> を打ちます。<code>Success</code> と出れば入りました。</li>
+    <li>端末のアプリの一覧から「TabSpan Probe」を開きます。</li>
+  </ol>
+  <div class="warn"><strong>仮の署名です。</strong>この APK は debug の鍵で署名した仮の物です。正式な鍵に変えた版は上書きで入らないので、いったん消してから入れ直します。</div>
+  <p>APK を端末で直接開いて入れることもできます。その場合は、提供元の不明なアプリを許す設定が要ります(場所は機種で違います)。</p>
+
+  <h3>3.2 PC の Probe をビルドする</h3>
+  <p>PC の Probe は、exe の隣に入る Windows SDK の DLL の再配布の条件をまだ確かめ終えていないため、ビルド済みの物を配っていません。ソースからビルドします。</p>
+  <ol class="steps">
+    <li>{{ app.repo }} から、ソースを取ります(「Code」→「Download ZIP」で取って展開するか、<code>git clone</code>)。</li>
+    <li>PowerShell で、取ったフォルダ(<code>README.md</code> がある所)に移ります。</li>
+    <li><code>dotnet build pc\TabSpan.sln -c Release</code> を打ちます。最後に「ビルドに成功しました」(英語の環境では <code>Build succeeded</code>)と出れば終わりです。</li>
+    <li>exe は次の場所にできます。<br><code>pc\src\TabSpan.Probe\bin\Release\net10.0-windows10.0.22621.0\win-x64\TabSpan.Probe.exe</code></li>
+  </ol>
+  <p>以下の例では、このフォルダに移ってから <code>.\TabSpan.Probe.exe</code> の形で動かします。<strong>管理者でない</strong> PowerShell から動かしてください。引数なしで動かすと、使い方の一覧が出ます。</p>
+
+  <h3>3.3 adb の確認</h3>
+  <p>端末をつないだ状態で <code>.\TabSpan.Probe.exe adb</code> を打つと、Probe が見つけた adb の場所と版、つながっている端末が出ます。端末のシリアルは先頭の 2 文字のほかを <code>***</code> で伏せて出します。</p>
+  <p>出力の例(一部を略しています):</p>
+  <pre>adb の場所: C:\Android\platform-tools\adb.exe (PATH)
+(adb devices は、adb のサーバーが動いていなければ起こします。サーバーはこの Probe が終わっても残ります)
+
+--- adb devices
+List of devices attached
+ab***	device</pre>
+  <p>端末が <code>unauthorized</code> と出るときは、端末の画面の「USB デバッグを許可しますか?」に答えていません。</p>
+</section>
+
+<div class="mf-page-break"></div>
+
+<!-- 4. 使い方 -->
+<section>
+  <h2>4. 使い方</h2>
+
+  <h3>4.1 Android の probe を開く</h3>
+  <p>アプリを開くと、端末の情報・画面の大きさ・<code>video/avc</code> のデコーダーの一覧と、候補の大きさごとの申告と configure の試しが、自動で順に出ます。全部が終わると <code>--- 終わり ---</code> が出ます。</p>
+  <figure class="mf-figure phone">
+    <img src="images/android-probe.png" alt="Android の probe の画面">
+    <figcaption>図 1 Android の probe(dtab d-01J)。上の欄がポート、右に「TLS のテスト」と「復号のテスト」のボタン。下に調べ物の結果が並ぶ。</figcaption>
+  </figure>
+  <ul>
+    <li>出た行は、PC から <code>adb logcat -s TabSpanProbe</code> でも読めます。長い結果を写すときに便利です。</li>
+    <li>アプリを開いている間は、画面が消えないようにしています。</li>
+  </ul>
+
+  <div class="mf-page-break"></div>
+
+  <h3>4.2 TLS のテスト(端末から PC へ TLS でつながるか)</h3>
+  <p>PC の Probe が 127.0.0.1 で TLS の待ち受けを開き、端末のアプリが USB 経由でそこへつなぎます。つながったら、TLS の版・暗号スイート・証明書の指紋を両方に出します。</p>
+  <div class="note">PC の待ち受けは <strong>60 秒だけ</strong>です。手順 3〜4 を 60 秒のうちに済ませます。間に合わなければ、手順 2 からやり直します。<br>アプリの仕事は 1 つずつ順に動きます。開いた直後の調べ物や復号のテストの途中で「TLS のテスト」を押すと順番待ちになり、60 秒が切れることがあります。<strong>手順 2 の前に、端末の画面に <code>--- 終わり ---</code> が出ていることを確かめます。</strong></div>
+  <ol class="steps">
+    <li>端末を USB で PC につなぎ、<code>adb devices</code> で <code>device</code> と出ることを確かめます。</li>
+    <li>PowerShell で <code>.\TabSpan.Probe.exe tls 47815</code> を打ちます。<code>証明書の SHA-256 の指紋:</code> の行が出て、60 秒の待ち受けが始まります。</li>
+    <li>別の PowerShell の窓で <code>adb reverse tcp:47815 tcp:47815</code> を打ちます。端末の 127.0.0.1:47815 が、PC の 127.0.0.1:47815 につながります。</li>
+    <li>端末のアプリで、ポートの欄が <code>47815</code> になっていることを確かめて「TLS のテスト」を押します。</li>
+    <li>端末に <code>TLS の結果: 成功</code> が出て、PC に <code>接続 1 (… 秒後): TLS の版 = …</code> が出ます。</li>
+    <li>PC の <code>証明書の SHA-256 の指紋</code> と、端末の <code>相手の証明書の SHA-256 の指紋</code> を見比べます。どちらも大文字の 16 進、区切りなしの 64 文字です。<strong>全部が同じなら</strong>、端末は確かに自分の PC につながっています。</li>
+  </ol>
+  <p>端末側は adb から始めることもできます(手順 4 の代わり)。</p>
+  <pre>adb shell am start -n io.github.takosasidev.tabspan.probe/.MainActivity --es action tls --ei port 47815</pre>
+  <p>出力の例(指紋は架空の値):</p>
+  <pre>PC   : 証明書の SHA-256 の指紋: 0A1B2C3D4E5F60718293A4B5C6D7E8F90A1B2C3D4E5F60718293A4B5C6D7E8F9
+PC   : 接続 1 (12 秒後): TLS の版 = Tls12、暗号スイート = TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+端末 : TLS の結果: 成功
+端末 : protocol: TLSv1.2
+端末 : 相手の証明書の SHA-256 の指紋: 0A1B2C3D4E5F60718293A4B5C6D7E8F90A1B2C3D4E5F60718293A4B5C6D7E8F9</pre>
+  <div class="warn"><strong>証明書は検査していません。</strong>このテストは測定用なので、端末は相手の証明書を検査せずにつなぎます。相手を確かめる方法は、手順 6 の指紋の見比べだけです。</div>
+  <p>ポートを変えるときは、手順 2・3・4 の 47815 を全部同じ番号にします。</p>
+
+  <div class="mf-page-break"></div>
+
+  <h3>4.3 復号のテスト(端末のデコーダーの速さを測る)</h3>
+  <p>PC で作った H.264 の映像を端末に置き、端末のデコーダーごとに、実際に復号して速さと遅れを測ります。</p>
+  <ol class="steps">
+    <li>端末のアプリで、一度「復号のテスト」を押します。まだ映像が無いので <code>ファイル 0 本</code> と出ますが、<code>置き場:</code> の行に、映像を置くフォルダが、次のような形で出ます。<br><code>/storage/emulated/0/Android/data/io.github.takosasidev.tabspan.probe/files</code><br>adb からは、次の場所が同じフォルダです。<br><code>/sdcard/Android/data/io.github.takosasidev.tabspan.probe/files</code></li>
+    <li>PC で試しの映像を作ります。ffmpeg で 1 本作る例(1280x800、30 fps、5 秒、8 Mbps)。紙面では折り返していますが、1 行で打ちます。写すときは README の同じ命令からが確実です:
+      <pre>ffmpeg -f lavfi -i testsrc2=size=1280x800:rate=30 -t 5 -c:v libx264 -profile:v main -bf 0 -g 60 -b:v 8M -x264-params aud=1 -f h264 tabspan_1280x800_30.h264</pre>
+      6 つの大きさ × 30・60 fps の 12 本をまとめて作る例(PowerShell):
+      <pre>foreach ($s in "1280x720","1280x800","1920x1080","1920x1200","2560x1440","2560x1600") {
+  foreach ($r in 30,60) {
+    ffmpeg -f lavfi -i "testsrc2=size=${s}:rate=$r" -t 5 -c:v libx264 -profile:v main -bf 0 -g 60 -b:v 8M -x264-params aud=1 -f h264 "tabspan_${s}_$r.h264"
+  }
+}</pre>
+    </li>
+    <li>作った映像を端末へ置きます。
+      <pre>adb push tabspan_1280x800_30.h264 /sdcard/Android/data/io.github.takosasidev.tabspan.probe/files/</pre>
+      まとめて置くときは、<code>adb push</code> を 1 本ずつ打つか、PowerShell で <code>Get-ChildItem tabspan_*.h264 | ForEach-Object { adb push $_.Name /sdcard/Android/data/io.github.takosasidev.tabspan.probe/files/ }</code> を打ちます。</li>
+    <li>もう一度「復号のテスト」を押します。<code>ファイル N 本</code> と出て、測定が始まります。</li>
+    <li>デコーダーごとに、1 本につき「速さ」と「遅れ」の 2 回を測ります。12 本では数分かかります。<code>--- 終わり ---</code> が出るまで待ちます。</li>
+    <li>最後に表と、<code>R-4(1280x800@30 を復号できるか)</code> の行が出ます。読み方は <a href="#ch5">5 章</a>にあります。</li>
+  </ol>
+  <p>adb から始めるときは次のとおりです(手順 4 の代わり)。</p>
+  <pre>adb shell am start -n io.github.takosasidev.tabspan.probe/.MainActivity --es action decode-test</pre>
+
+  <h3>映像の決まり</h3>
+  <ul>
+    <li>名前は <code>tabspan_&lt;幅&gt;x&lt;高さ&gt;_&lt;fps&gt;.h264</code> の形にぴったり合わせます(例: <code>tabspan_1920x1080_60.h264</code>)。形の違うファイルは数えません。</li>
+    <li>中身は生の H.264(Annex B)で、各フレームの先頭に AUD が要ります。ffmpeg では <code>-x264-params aud=1</code> と <code>-f h264</code> で、この形になります。</li>
+    <li>測定 1 回は 20 秒で打ち切ります。<code>-t 5</code>(5 秒)くらいの長さにします。</li>
+    <li>名前に <code>.secure</code> が付くデコーダーは測りません。</li>
+  </ul>
+</section>
+
+<div class="mf-page-break"></div>
+
+<section>
+  <h3>4.4 PC の Probe: 画面や入力を変えない命令</h3>
+  <p>次の命令は、結果を出すだけで、画面の構成や入力を変えません。<code>&lt;識別子&gt;</code> には、<code>monitors</code> が出す <code>DeviceName</code>(例: <code>\\.\DISPLAY2</code>)を入れます。</p>
+  <table>
+    <tr><th>命令</th><th>やること</th></tr>
+    <tr><td><code>monitors</code></td><td>モニターの一覧。名前・識別子・大きさ・位置・付いているか・主モニターか。付いていない物も出します</td></tr>
+    <tr><td><code>capture &lt;識別子&gt;</code></td><td>そのモニターを 5 秒取り込み、届いたフレームの数・大きさと、カーソルと枠の設定が通ったかを出します</td></tr>
+    <tr><td><code>encoders</code></td><td>H.264 のエンコーダーの一覧(名前・ハードウェアかどうか)と、使えるプロパティ</td></tr>
+    <tr><td><code>encode &lt;識別子&gt;</code></td><td>5 秒取り込んで H.264 に圧縮し、フレームの数・キーフレームの数・バイト数・圧縮の時間を出します。ハードウェアのエンコーダーは全部、ソフトウェアは 1 つを試します</td></tr>
+    <tr><td><code>adb</code></td><td>adb の場所・版・つながっている端末(3.3 節)</td></tr>
+    <tr><td><code>tls &lt;port&gt;</code></td><td>TLS の待ち受け(4.2 節)</td></tr>
+  </table>
+  <ul>
+    <li><code>capture</code> と <code>encode</code> は、画面が変わらないとフレームが届きません。動いている間は、そのモニターの上でマウスを動かし続けます。</li>
+    <li>取り込みの間、そのモニターの縁に色の枠が出ることがあります。取り込みが終われば消えます。</li>
+    <li>取り込んだ絵も、圧縮した中身も、ファイルに保存しません。</li>
+  </ul>
+
+  <h3>4.5 detach と attach(モニターを外す・付ける)</h3>
+  <div class="warn">
+    <strong>何が起きるか:</strong> <code>detach</code> は、選んだモニターを本当にデスクトップから外します。そのモニターの画面は消え、そこにあったウィンドウはほかの画面へ移ります。外した状態は Windows の設定に書かれるので、<strong>放っておいても、PC を再起動しても元に戻りません</strong>。<br>
+    <strong>戻し方:</strong> <code>detach</code> が <code>y</code> を聞く前に出す「同じ位置と大きさに戻す命令」を、そのまま打ちます。控え忘れたときは、Windows の「設定」→「システム」→「ディスプレイ」から付け直せます。
+  </div>
+  <ol class="steps">
+    <li>できれば、実在のモニターではなく、別に入れた仮想ディスプレイで試します。<code>.\TabSpan.Probe.exe monitors</code> で識別子を確かめます。</li>
+    <li><code>.\TabSpan.Probe.exe detach \\.\DISPLAY2</code> のように打ちます。</li>
+    <li>次の 3 行が出ます。2 行目の命令を、<strong>メモ帳などに写して控えます</strong>。
+      <pre>外す前: 位置 (1920,0)、大きさ 1920x1080              ← 例
+同じ位置と大きさに戻す命令: TabSpan.Probe.exe attach \\.\DISPLAY2 1920 0 1920 1080
+仮想ディスプレイでないモニターを外すと、その画面は消えます。上の命令で戻せます。</pre></li>
+    <li><code>続けますか [y/N]:</code> に <code>y</code> と打って Enter を押すと外します。ほかのキーなら、何もせずにやめます。</li>
+    <li>戻すときは、控えた命令を <code>.\TabSpan.Probe.exe attach \\.\DISPLAY2 1920 0 1920 1080</code> の形で打ち、確認に <code>y</code> と答えます。</li>
+  </ol>
+  <ul>
+    <li>主モニターと、付いている最後の 1 枚は外しません(<code>断りました:</code> と出ます)。</li>
+    <li><code>attach</code> で位置と大きさを省くと、いちばん右のモニターの右隣に置き、大きさは Windows に任せます。</li>
+  </ul>
+
+  <h3>4.6 touch(タッチを注入する)</h3>
+  <div class="warn">
+    <strong>何が起きるか:</strong> 指定した位置を、指で触ったのと同じように本当に押します。まず 1 回タップし、続けて 3 秒の長押しを 4 回(更新の間隔 50・100・200・500 ms)行います。全部で 15 秒ほどかかります。その位置にあるボタンなどが押され、<strong>押された結果は取り消せません</strong>。<br>
+    <strong>戻し方:</strong> 戻す操作はありません。押されても困らない場所(デスクトップの何も無い所や、何も書いていないメモ帳の上など)を選びます。
+  </div>
+  <ol class="steps">
+    <li><code>monitors</code> の「位置」と「大きさ」から、押す位置を決めます。座標は物理ピクセルで、主モニターの左上が (0,0) です。</li>
+    <li>押される場所に、困る物が無いことを確かめます。</li>
+    <li><code>.\TabSpan.Probe.exe touch 400 300</code> のように打ち、確認に <code>y</code> と答えます。</li>
+    <li>長押しごとに、<code>押す = 通った</code>・<code>更新 N 回のうち失敗 M 回</code>・<code>離す = 通った</code> のような行が出ます。長押しが途中で切れたかどうかは数字では分からないので、画面で見ておきます。</li>
+  </ol>
+  <p>管理者の権限で動いているウィンドウには、タッチが届きません。</p>
+
+  <h3>4.7 clock(時計のウィンドウ)</h3>
+  <div class="note">
+    <strong>何が起きるか:</strong> 黒い地に白い文字で、起動からの経過時間(分:秒.ミリ秒)を出すウィンドウが開きます。画面や設定は変えません。<br>
+    <strong>戻し方:</strong> ウィンドウを閉じると終わります。コンソールに <code>時計のウィンドウ: OK</code> と出ます。
+  </div>
+  <p>使い道: 時計を PC の画面に出し、それを端末に映した状態で、PC の画面と端末の画面を 1 枚の写真に撮ります。写った 2 つの時刻の差が、映すまでの遅れです。いまは {{ app.name }} 本体が無いので、端末に映すには別のソフトを使います。ウィンドウの大きさを変えると、字の大きさも変わります。</p>
+</section>
+
+<div class="mf-page-break"></div>
+
+<!-- 5. 結果の読み方 -->
+<section id="ch5">
+  <h2>5. 結果の読み方</h2>
+
+  <h3>5.1 monitors</h3>
+  <p>出力の例(名前と ID は架空の値。一部を略しています):</p>
+  <pre>モニターの一覧: 2 件(大きさと位置は物理ピクセル。付いていない物も出す)
+
+DeviceName  : \\.\DISPLAY1
+DeviceString: Example Graphics Adapter
+付いているか: はい    主モニターか: はい    StateFlags: 0x00000005 (…)
+大きさ      : 1920x1080 @ 60 Hz    位置: (0,0)    [現在の設定]
+  モニター DeviceString: Example Monitor
+
+DeviceName  : \\.\DISPLAY2
+DeviceString: Example Graphics Adapter
+付いているか: はい    主モニターか: いいえ    StateFlags: 0x00000001 (…)
+大きさ      : 1920x1080 @ 60 Hz    位置: (1920,0)    [現在の設定]</pre>
+  <ul>
+    <li><code>DeviceName</code> が、ほかの命令に渡す識別子です。</li>
+    <li>「付いているか」が「いいえ」のモニターは、デスクトップに無いので取り込めません。</li>
+  </ul>
+
+  <h3>5.2 capture と encode</h3>
+  <table>
+    <tr><th>行</th><th>読み方</th></tr>
+    <tr><td><code>届いたフレームの数</code></td><td>5 秒で届いた絵の数と fps。マウスを動かしていないと少なくなります</td></tr>
+    <tr><td><code>IsBorderRequired</code> の読み直し</td><td>取り込みの枠を消す設定が通ったか。<code>False</code> でも、枠が出たかは目で見て確かめます</td></tr>
+    <tr><td><code>出たフレームの数</code> / <code>キーフレームの数</code> / <code>合計のバイト数</code></td><td>圧縮して出てきた絵の数と大きさ</td></tr>
+    <tr><td><code>1 フレームの圧縮にかかった時間</code></td><td>1 枚の圧縮にかかった時間の中央値</td></tr>
+    <tr><td><code>どのエンコーダーで出たか</code></td><td>ハードウェアか、ソフトウェアか</td></tr>
+  </table>
+  <p>開発者の PC では、ハードウェアのエンコーダーはまだ通っていません。ソフトウェアのエンコーダーでは、1920x1080 で 1 枚あたり約 2.5 ms でした。</p>
+
+  <h3>5.3 端末の調べ物</h3>
+  <ul>
+    <li><code>申告: 可 / 不可</code> は、デコーダーが自分で「この大きさと fps を扱える」と答えた結果です。</li>
+    <li><code>configure: 成功</code> は、その大きさでデコーダーを用意できたという意味で、実際に速く復号できるかは分かりません。それを測るのが復号のテストです。</li>
+    <li>dtab d-01J では、申告で「不可」だった大きさも、復号のテストでは実時間より速く復号できました(5.5 節)。</li>
+  </ul>
+
+  <div class="mf-page-break"></div>
+
+  <h3>5.4 復号のテストの表</h3>
+  <p>出力の例(デコーダーの名前と数字は、説明のための架空の値です):</p>
+  <pre>--- 表(速さの実測 fps / 遅れの中央値。BB は ByteBuffer の出力で測った物) ---
+大きさ@fps   | OMX.example.hw.decoder | OMX.example.sw.decoder
+1280x800@30  | 400.0fps/8.0ms         | 90.0fps/40.0ms
+2560x1600@30 | 110.0fps/15.0ms        | 時間切れ 0/150枚
+R-4(1280x800@30 を復号できるか): できた(OMX.example.hw.decoder 400.0 fps Surface) [条件: 速さの測定で全ユニットが絵になり、実測 fps ≥ 30]</pre>
+  <table>
+    <tr><th>マスの形</th><th>意味</th></tr>
+    <tr><td><code>400.0fps/8.0ms</code></td><td>左が<strong>速さ</strong>(できるだけ速く入れたときに 1 秒あたり何枚出たか)、右が<strong>遅れ</strong>(実時間の間隔で入れたとき、1 枚を入れてから絵が出るまでの時間の中央値)</td></tr>
+    <tr><td>末尾に <code>BB</code></td><td>Surface へ復号できず、ByteBuffer の出力で測った</td></tr>
+    <tr><td>末尾に <code>(140/150枚)</code></td><td>入れた数より、出た絵が少なかった</td></tr>
+    <tr><td><code>時間切れ 0/150枚</code> など</td><td>測れなかった。前が理由(時間切れ・例外の名前・<code>configure失敗</code> など)、後ろが出た絵の数</td></tr>
+  </table>
+  <ul>
+    <li>速さが映像の fps(30 か 60)より大きければ、その大きさを実時間で復号できています。</li>
+    <li>遅れは小さいほど、映すまでの遅れが短くなります。</li>
+    <li><code>R-4(1280x800@30 を復号できるか)</code> の行は、1280x800@30 の映像を、どれかのデコーダーで全部の枚数、30 fps 以上の速さで復号できたかの判定です。<code>できた</code>・<code>できない</code>・<code>判定できない</code>(その映像を置いていない、または全部のデコーダーで測れなかった)のどれかが出ます。</li>
+  </ul>
+
+  <h3>5.5 参考: dtab d-01J での実測</h3>
+  <p>ハードウェアのデコーダー <code>OMX.IMG.MSVDX.Decoder.AVC</code>、Surface へ復号、合成の映像・8 Mbps での結果です。</p>
+  <table>
+    <tr><th>大きさ</th><th>30 fps: 速さ</th><th>30 fps: 遅れ</th><th>60 fps: 速さ</th><th>60 fps: 遅れ</th></tr>
+    <tr><td>1280x720</td><td>457 fps</td><td>5.8 ms</td><td>483 fps</td><td>6.0 ms</td></tr>
+    <tr><td>1280x800</td><td>425 fps</td><td>7.8 ms</td><td>443 fps</td><td>7.3 ms</td></tr>
+    <tr><td>1920x1080</td><td>223 fps</td><td>10.7 ms</td><td>230 fps</td><td>9.8 ms</td></tr>
+    <tr><td>1920x1200</td><td>203 fps</td><td>10.9 ms</td><td>209 fps</td><td>10.2 ms</td></tr>
+    <tr><td>2560x1440</td><td>125 fps</td><td>17.0 ms</td><td>128 fps</td><td>12.4 ms</td></tr>
+    <tr><td>2560x1600</td><td>115 fps</td><td>14.4 ms</td><td>116 fps</td><td>13.4 ms</td></tr>
+  </table>
+  <p>全部の大きさで、実時間より速く復号できました。デコーダーの申告で「不可」だった 1920x1080@60・1920x1200・2560x1440・2560x1600 も含みます。ソフトウェアのデコーダー <code>OMX.google.h264.decoder</code> は、2560x1600 で約 48 fps、遅れは 90〜200 ms でした。</p>
+  <p>TLS のテストでは、この端末から USB(<code>adb reverse</code>)経由で、TLS 1.2(ECDHE-ECDSA、AES-256-GCM)でつながりました。</p>
+</section>
+
+<div class="mf-page-break"></div>
+
+<!-- 6. 困ったとき -->
+<section>
+  <h2>6. 困ったとき</h2>
+  <table>
+    <tr><th>こうなった</th><th>見る所・直し方</th></tr>
+    <tr><td><code>adb devices</code> に端末が出ない</td><td>USB デバッグが有効か(2 章)。線がデータを通せる物か。別の USB の口や線で試す</td></tr>
+    <tr><td>端末が <code>unauthorized</code> と出る</td><td>端末の画面の「USB デバッグを許可しますか?」で「許可」を押す。出ていなければ線を抜き差しする</td></tr>
+    <tr><td><code>adb</code> の命令で <code>adb の場所: 見つからない</code></td><td>Platform-Tools のフォルダに PATH を通す。winget で <code>Google.PlatformTools</code> を入れてもよい</td></tr>
+    <tr><td><code>adb install</code> が <code>INSTALL_FAILED_UPDATE_INCOMPATIBLE</code> で失敗する</td><td>署名の違う版が入っている。8 章の手順でいったん消してから入れ直す</td></tr>
+    <tr><td><code>dotnet build</code> が失敗する</td><td><code>dotnet --list-sdks</code> で 10.x の SDK があるか確かめる。無ければ .NET 10 SDK を入れる</td></tr>
+    <tr><td>端末に <code>TLS の結果: 失敗</code> と出る</td><td>PC の 60 秒が過ぎていないか。<code>adb reverse</code> を打ったか。ポートの番号が 3 か所(PC の <code>tls</code>・<code>adb reverse</code>・アプリの欄)で同じか。例外の種類が <code>java.net.ConnectException</code> なら、たいてい <code>adb reverse</code> の打ち忘れ</td></tr>
+    <tr><td>PC に <code>待ち受けを開く: 失敗</code> と出る</td><td>そのポートを別のソフトが使っている。別の番号(例: 47816)にして、3 か所をそろえる</td></tr>
+    <tr><td>指紋が違う</td><td>自分の PC の Probe ではない相手につながっている。結果を信じず、<code>adb reverse --remove-all</code> をしてから、4.2 節を最初からやり直す</td></tr>
+    <tr><td>復号のテストで <code>ファイル 0 本</code></td><td>名前が <code>tabspan_&lt;幅&gt;x&lt;高さ&gt;_&lt;fps&gt;.h264</code> にぴったり合っているか。<code>置き場:</code> の行のフォルダに置いたか</td></tr>
+    <tr><td><code>AUD(NAL 種類 9)が無いので区切れない</code></td><td>映像に AUD が入っていない。ffmpeg に <code>-x264-params aud=1</code> を付けて作り直す</td></tr>
+    <tr><td><code>置き場: (getExternalFilesDir が null)</code></td><td>端末の記憶域が使えない状態。端末を再起動して、もう一度押す</td></tr>
+    <tr><td><code>capture</code> / <code>encode</code> でフレームが 0</td><td>測っている間、そのモニターの上でマウスを動かす。デスクトップに付いていないモニターは取り込めない</td></tr>
+    <tr><td><code>encode</code> でハードウェアが通らない</td><td>開発者の PC でも、まだ通っていません。ソフトウェアの結果は使えます</td></tr>
+    <tr><td><code>detach</code> で <code>断りました:</code></td><td>主モニターと、付いている最後の 1 枚は外さない決まりです</td></tr>
+    <tr><td>モニターを外したまま戻せない</td><td>控えた <code>attach</code> の命令を打つ。控えが無ければ、Windows の「設定」→「システム」→「ディスプレイ」で付け直す</td></tr>
+    <tr><td><code>touch</code> で <code>失敗 (GetLastError=…)</code></td><td>数字をそのまま控えて報告してください。管理者の権限で動いているウィンドウには届きません</td></tr>
+  </table>
+</section>
+
+<div class="mf-page-break"></div>
+
+<!-- 7. 安全とプライバシー -->
+<section>
+  <h2>7. 安全とプライバシー</h2>
+  <ul>
+    <li><strong>保存しない:</strong> 取り込んだ画面、圧縮した映像、測定の結果をファイルに書きません。結果はコンソールと端末の画面(と logcat)に出るだけです。</li>
+    <li><strong>証明書の鍵:</strong> <code>tls</code> は、その場で自己署名の証明書(ECDSA P-256)を作ります。鍵は Windows の利用者の鍵の置き場に一時的に置かれ、Probe が証明書を手放すと消えます。</li>
+    <li><strong>外へ通信しない:</strong> PC の <code>tls</code> は 127.0.0.1 だけで待ち受けます。端末のアプリがつなぐ先も 127.0.0.1 だけで、権限は INTERNET だけです。</li>
+    <li><strong>証明書を検査しない:</strong> TLS のテストは測定用なので、端末は相手の証明書を検査しません。相手は指紋で確かめます(4.2 節)。</li>
+    <li><strong>実在のモニターも外せる:</strong> <code>detach</code> は仮想ディスプレイに限らず外せます。外す前に出る戻す命令を必ず控えます(4.5 節)。</li>
+    <li><strong>本当に押す:</strong> <code>touch</code> は、その位置の物を本当に押します(4.6 節)。</li>
+    <li><strong>出力を公開の場所に貼らない:</strong> PC の Probe の出力には、モニターやアダプターの名前、デバイス ID、adb の場所などが入ります。<code>adb</code> の命令は端末のシリアルと利用者のフォルダの名前を伏せますが、ほかの命令は伏せません。人に見せるときは、名前や ID を消してから貼ります。</li>
+  </ul>
+</section>
+
+<div class="mf-page-break"></div>
+
+<!-- 8. 片付け -->
+<section id="ch8">
+  <h2>8. 片付け</h2>
+  <h3>端末</h3>
+  <ol class="steps">
+    <li>置いた映像を消します。<br><code>adb shell rm /sdcard/Android/data/io.github.takosasidev.tabspan.probe/files/tabspan_*.h264</code><br>アプリを消すと、このフォルダもいっしょに消えます。</li>
+    <li>アプリを消します。<code>adb uninstall io.github.takosasidev.tabspan.probe</code> を打つか、端末の「設定」→「アプリ」から「TabSpan Probe」をアンインストールします。</li>
+    <li>ポートの中継を外します。<code>adb reverse --remove-all</code></li>
+    <li>adb を使い終えたら、端末の「開発者向けオプション」で「USB デバッグ」を無効にします。</li>
+  </ol>
+  <h3>PC</h3>
+  <ol class="steps">
+    <li><code>detach</code> で外したモニターがあれば、控えた <code>attach</code> の命令で付け直します。</li>
+    <li>Probe が起こした adb のサーバーは、Probe が終わっても残ります。止めるときは <code>adb kill-server</code> を打ちます。</li>
+    <li>PC の Probe はインストールしていないので、取ったソースのフォルダごと消せば片付きます。作った試しの映像(<code>tabspan_*.h264</code>)も消します。</li>
+  </ol>
+</section>
+
+<!-- 9. ライセンスと連絡先 -->
+<section>
+  <h2>9. ライセンスと連絡先</h2>
+  <ul>
+    <li>{{ app.name }} のコードは MIT ライセンスです(リポジトリの <code>LICENSE</code>)。</li>
+    <li>ビルドで使うライブラリのライセンスは、リポジトリの <code>THIRD-PARTY-NOTICES.md</code> にあります。</li>
+    <li>不具合の報告や質問は、GitHub のリポジトリの Issues へお願いします。<br>{{ app.repo }}</li>
+    <li>測定の結果を報告していただけるときは、7 章のとおり、PC の名前や ID を消してから貼ってください。</li>
+  </ul>
+  <p class="muted">この説明書は {{ app.name }} {{ app.version }}({{ app.date }})の測定用ツールについて書いた物です。アプリ本体ができたら、別の説明書にします。</p>
+</section>
+
+</body>
+</html>

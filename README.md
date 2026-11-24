@@ -1,92 +1,243 @@
 # TabSpan
 
-Android の端末を、Windows PC の拡張モニターにするソフトです。[English](README.en.md)
+Android の端末を、Windows PC の拡張モニターにするソフト(開発中)。
 
-> **開発中です。まだ使える物はありません。**
-> いまリポジトリにあるのは、設計を決めるための測定用ツール(Probe)の PC 側と Android 側だけです。アプリ本体は、これから作ります。
+[English](README.en.md) | 日本語
+
+> [!IMPORTANT]
+> **開発中です。まだ PC の画面を端末に映すことはできません。**
+> いまこのリポジトリにあるのは、設計を決めるための **測定用ツール(Phase 0 の Probe)** だけです。PC の画面を端末に映すアプリ本体は、まだありません。
+
+## 目次
+
+- [作ろうとしている物](#作ろうとしている物)
+- [いまの状況](#いまの状況)
+- [測定でわかったこと](#測定でわかったこと)
+- [画面](#画面)
+- [はじめ方](#はじめ方)
+- [測定用ツールの使い方](#測定用ツールの使い方)
+- [ソースからビルド](#ソースからビルド)
+- [安全とプライバシー](#安全とプライバシー)
+- [取扱説明書](#取扱説明書)
+- [ライセンス](#ライセンス)
 
 ## 作ろうとしている物
 
-PC 側(C# / .NET 10 / WPF の常駐アプリ)が画面を取り込み、H.264 に圧縮して送ります。Android 側(Kotlin)が復号して全画面で映し、タッチを PC に返します。つなぎ方は USB(adb の転送)と LAN です。
+PC 側(C# / .NET 10 の常駐アプリ)が画面を取り込み、H.264 に圧縮して送ります。Android 側(Kotlin)が復号して全画面で映し、触った位置を PC に返します。つなぎ方は USB(adb の転送)と LAN で、どちらも TLS で包みます。
+
+```mermaid
+flowchart LR
+    subgraph PC["Windows PC"]
+        A["画面を取り込む"] --> B["H.264 に圧縮"]
+        T["タッチを注入"]
+    end
+    subgraph DEV["Android の端末"]
+        C["復号"] --> D["全画面で表示"]
+        D --> E["触った位置を読む"]
+    end
+    B -- "TLS(USB または LAN)" --> C
+    E -- "タッチの座標(TLS)" --> T
+```
 
 設計で守ること:
 
 - 仮想ディスプレイのドライバを作りません。入れることも、設定を書き換えることもしません。利用者が別に入れた仮想ディスプレイを「映す画面」として選ぶだけです。実在のモニターを選べば、ドライバなしで複製として動きます。
-- PC 側は管理者で動かしません。
-- 通信は USB でも TLS で、ペアリングした端末だけを通します。初回のペアリングは USB 経由に限ります。
+- PC 側は管理者の権限で動かしません。
+- 通信は USB でも TLS で、ペアリングした端末だけを通します。初回のペアリングは USB に限ります。
 - 映像・タッチの座標・画面の内容を保存しません。ペアリングした端末のほかへ通信しません。
 
-## 開発の状況
+## いまの状況
 
-| 段階 | 中身 | 状態 |
+最新は [v0.0.2](https://github.com/takosasi-dev/tab-span/releases/tag/v0.0.2)(プレリリース)です。中身は Phase 0(測定)の道具だけです。
+
+| Phase 0 の中身 | 状態 |
+|---|---|
+| PC の測定用ツール `TabSpan.Probe` を作る | 済み |
+| Android の測定用アプリ(probe)を作る | 済み |
+| モニターの一覧(`monitors`)・画面の取り込み(`capture`) | 済み(実行した) |
+| H.264 のエンコーダーの一覧(`encoders`) | 済み(実行した) |
+| 圧縮(`encode`)のソフトウェアのエンコーダー | 済み(実行した) |
+| 圧縮(`encode`)のハードウェアのエンコーダー | これから(まだ通っていない) |
+| adb の確認(`adb`) | 済み(実行した) |
+| 端末から PC への TLS の接続(`tls` と端末の「TLS のテスト」) | 済み(つながった) |
+| 端末のデコーダーの調べ物と復号のテスト | 済み(dtab d-01J で実行した) |
+| モニターの取り外し・取り付け(`detach` / `attach`) | これから |
+| タッチの注入(`touch`) | これから |
+| 時計(`clock`)を撮影して遅延を測る | これから |
+| 仮想ディスプレイでの試し | これから |
+| spacedesk との比べ | これから |
+| アプリ本体(画面を映す・タッチを返す) | 未着手 |
+
+## 測定でわかったこと
+
+端末は dtab d-01J(Android 7.0)です。
+
+- **TLS**: 端末から USB(`adb reverse`)経由で PC の `tls` へ、TLS 1.2(ECDHE-ECDSA、AES-256-GCM)でつながりました。
+- **復号**: 端末のハードウェアのデコーダー(`OMX.IMG.MSVDX.Decoder.AVC`)は、試した 1280x720〜2560x1600 の 30 fps と 60 fps を全部、実時間より速く復号できました。デコーダー自身の申告では「不可」だった大きさ(1920x1080@60、1920x1200、2560x1440、2560x1600)も含みます。
+- **ソフトウェアのデコーダー**: `OMX.google.h264.decoder` は 2560x1600 で約 48 fps、遅れは 90〜200 ms でした。
+- **PC の圧縮**: ハードウェアのエンコーダーは、まだ通っていません。ソフトウェアのエンコーダーでは、1920x1080 で 1 枚あたり約 2.5 ms でした。
+
+ハードウェアのデコーダーの実測(Surface へ復号。合成の映像・8 Mbps):
+
+| 大きさ | 30 fps: 速さ | 30 fps: 遅れ | 60 fps: 速さ | 60 fps: 遅れ |
+|---|---:|---:|---:|---:|
+| 1280x720 | 457 fps | 5.8 ms | 483 fps | 6.0 ms |
+| 1280x800 | 425 fps | 7.8 ms | 443 fps | 7.3 ms |
+| 1920x1080 | 223 fps | 10.7 ms | 230 fps | 9.8 ms |
+| 1920x1200 | 203 fps | 10.9 ms | 209 fps | 10.2 ms |
+| 2560x1440 | 125 fps | 17.0 ms | 128 fps | 12.4 ms |
+| 2560x1600 | 115 fps | 14.4 ms | 116 fps | 13.4 ms |
+
+- 速さ: できるだけ速く入れたときに、1 秒あたり何枚出たか。
+- 遅れ: 実時間の間隔で入れたときに、1 枚を入れてから絵が出るまでの時間の中央値。
+
+1 台の端末・合成の映像での結果です。ほかの端末や、実際のデスクトップの映像では変わります。
+
+## 画面
+
+Android の probe を dtab d-01J で開いたところです。起動すると、端末とデコーダーの調べ物が自動で始まります。
+
+<img src="docs/images/android-probe.png" alt="Android の probe の画面。上にポートの欄と「TLS のテスト」「復号のテスト」のボタン、下に端末とデコーダーの調べ物の結果が並ぶ" width="360">
+
+## はじめ方
+
+### Android の probe を入れる
+
+対象は Android 7.0 以上です。
+
+1. [v0.0.2 の Release](https://github.com/takosasi-dev/tab-span/releases/tag/v0.0.2) から `TabSpan-Probe-v0.0.2-android.apk` を取ります。
+2. 端末に入れます。PC から入れるなら `adb install TabSpan-Probe-v0.0.2-android.apk`。端末で直接開く場合は、提供元の不明なアプリを許す設定が要ります(場所は機種で違います)。
+3. 端末で「TabSpan Probe」を開きます。調べ物が自動で始まり、最後に `--- 終わり ---` が出ます。
+
+> [!NOTE]
+> この APK は **debug の鍵で署名した仮の物** です。正式な鍵に変えた後は、いったん消して入れ直す必要があります。
+
+### PC の Probe を用意する
+
+PC の Probe はビルド済みの物を配っていません。exe の隣に入る Windows SDK の DLL の再配布の条件を、まだ確かめ終えていないためです。[ソースからビルド](#ソースからビルド)してください。
+
+## 測定用ツールの使い方
+
+### PC の Probe(`TabSpan.Probe.exe`)
+
+管理者でない PowerShell から動かします。引数なしで動かすと使い方が出ます。`<識別子>` は `monitors` が出す `DeviceName`(例: `\\.\DISPLAY2`)です。
+
+| サブコマンド | やること | 注意 |
 |---|---|---|
-| Phase 0 | 測定用ツール(Probe) | PC 側と Android 側を作った。家の PC と dtab(Android 7.0)で monitors・encoders・capture・encode(ソフトウェア)・adb・tls と Android の probe を実行。detach / attach・touch・clock と仮想ディスプレイはこれから |
-| Phase 1〜6 | 本体 | 未着手 |
+| `monitors` | モニターの一覧(名前・識別子・大きさ・位置・付いているか・主モニターか) | |
+| `capture <識別子>` | そのモニターを 5 秒取り込み、届いたフレームの数・大きさ・カーソルと枠の設定が通ったかを出す | 取り込んだ絵は保存しない |
+| `encoders` | H.264 のエンコーダーの一覧と、使えるプロパティを出す | |
+| `encode <識別子>` | 5 秒取り込んで圧縮し、フレームの数・キーフレームの数・バイト数・圧縮の時間を出す | 絵も圧縮した中身も保存しない |
+| `detach <識別子>` | そのモニターをデスクトップから外す | **画面が消える**。確認あり |
+| `attach <識別子> [x y 幅 高さ]` | 外したモニターをデスクトップに付ける | **画面の構成が変わる**。確認あり |
+| `touch <x> <y>` | その位置を 1 回タップし、3 秒の長押しを 4 回試す | **その位置の物が本当に押される**。確認あり |
+| `adb` | adb の場所・版・つながっている端末を出す(シリアルは伏せる) | adb のサーバーを起こすことがある |
+| `clock` | ミリ秒まで出る時計のウィンドウを出す(撮影で遅延を測るため) | **ウィンドウが開く**。閉じると終わる |
+| `tls <port>` | 127.0.0.1 に TLS の待ち受けを 60 秒開く(端末からの接続テスト用) | 127.0.0.1 だけで待ち受ける |
 
-## いまある物: PC 側の Probe
+`detach`・`attach`・`touch`・`clock` は、画面や入力に実際の変化を起こします。動かす前に、[取扱説明書](#取扱説明書)の該当の節を読んでください。
 
-動作環境: Windows 11(x64)、.NET 10 SDK。
+### Android の probe
+
+| 操作 | やること |
+|---|---|
+| 開く | 端末の情報・画面の大きさ・`video/avc` のデコーダーの一覧と、候補の大きさごとの申告と configure の試しを出す |
+| ポートの欄 | TLS のテストでつなぐポート(既定は 47815) |
+| 「TLS のテスト」 | 127.0.0.1 のそのポートへ TLS 1.2 でつなぎ、結果と相手の証明書の指紋を出す |
+| 「復号のテスト」 | 置いた H.264 の映像を、デコーダーごとに復号して速さと遅れを測る |
+
+出た行は logcat(タグ `TabSpanProbe`)にも出ます。PC で `adb logcat -s TabSpanProbe` と打つと読めます。
+
+adb から始めることもできます。
+
+```powershell
+# TLS のテスト(ポート 47815)
+adb shell am start -n io.github.takosasidev.tabspan.probe/.MainActivity --es action tls --ei port 47815
+# 復号のテスト
+adb shell am start -n io.github.takosasidev.tabspan.probe/.MainActivity --es action decode-test
+```
+
+### TLS のテスト
+
+1. PC で `TabSpan.Probe.exe tls 47815` を動かします。証明書の SHA-256 の指紋が出て、60 秒待ち受けます。
+2. 別の PowerShell で `adb reverse tcp:47815 tcp:47815` を打ちます。端末の 127.0.0.1:47815 が PC へつながります。
+3. 60 秒のうちに、端末のアプリで「TLS のテスト」を押します。アプリの仕事は順番に並ぶので、起動の調べ物や復号のテストの途中なら、`--- 終わり ---` が出てから押します(手順 1 より前に済ませておくと確実です)。
+4. PC の「証明書の SHA-256 の指紋」と、端末の「相手の証明書の SHA-256 の指紋」が同じか見比べます(どちらも大文字の 16 進、区切りなし)。
+
+出力の例(例です。指紋は架空の値):
+
+```text
+PC:   証明書の SHA-256 の指紋: 0A1B2C3D4E5F60718293A4B5C6D7E8F90A1B2C3D4E5F60718293A4B5C6D7E8F9
+PC:   接続 1 (12 秒後): TLS の版 = Tls12、暗号スイート = TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+端末: TLS の結果: 成功
+端末: 相手の証明書の SHA-256 の指紋: 0A1B2C3D4E5F60718293A4B5C6D7E8F90A1B2C3D4E5F60718293A4B5C6D7E8F9
+```
+
+### 復号のテスト
+
+1. 端末のアプリで、一度「復号のテスト」を押します。出力の `置き場:` の行に、映像を置くフォルダが出ます。`/storage/emulated/0/Android/data/io.github.takosasidev.tabspan.probe/files` のような形で、adb からは `/sdcard/Android/data/io.github.takosasidev.tabspan.probe/files` が同じ場所です。
+2. PC で試したい映像を作ります。生の H.264(Annex B)で、各フレームの先頭に AUD が要ります。名前は `tabspan_<幅>x<高さ>_<fps>.h264` です。ffmpeg の例:
+
+   ```powershell
+   ffmpeg -f lavfi -i testsrc2=size=1280x800:rate=30 -t 5 -c:v libx264 -profile:v main -bf 0 -g 60 -b:v 8M -x264-params aud=1 -f h264 tabspan_1280x800_30.h264
+   ```
+
+3. 端末のフォルダへ置きます: `adb push tabspan_1280x800_30.h264 /sdcard/Android/data/io.github.takosasidev.tabspan.probe/files/`
+4. もう一度「復号のテスト」を押します。デコーダーごとに速さと遅れを測り、最後に表が出ます。数分かかることがあります(測定 1 回ごとに 20 秒で打ち切ります)。
+
+表のマスの読み方:
+
+| マスの形 | 意味 |
+|---|---|
+| `425.0fps/7.8ms` | 速さ / 遅れの中央値 |
+| 末尾に `BB` | Surface へ復号できず、ByteBuffer の出力で測った |
+| 末尾に `(140/150枚)` | 入れた数より出た絵が少なかった |
+| `時間切れ 0/150枚` など | 測れなかった(理由と、出た枚数) |
+
+表の下に出る `R-4(1280x800@30 を復号できるか)` の行は、1280x800@30 の映像を、どれかのデコーダーで全部の枚数、30 fps 以上の速さで復号できたかの判定です。`tabspan_1280x800_30.h264` を置いていなければ「判定できない」と出ます。
+
+## ソースからビルド
+
+### PC の Probe
+
+- Windows 11(x64)
+- .NET 10 SDK
+- Windows SDK の参照は、プロジェクトの対象(`net10.0-windows10.0.22621.0`)から .NET SDK が自動で取ります。別に入れる物はありません。
 
 ```powershell
 dotnet build pc\TabSpan.sln -c Release
 ```
 
-`TabSpan.Probe.exe` を引数なしで動かすと、使い方が出ます。管理者でない PowerShell から動かしてください。
+exe は `pc\src\TabSpan.Probe\bin\Release\net10.0-windows10.0.22621.0\win-x64\TabSpan.Probe.exe` に出ます。
 
-| サブコマンド | やること |
-|---|---|
-| `monitors` | モニターの一覧を出す |
-| `capture <識別子>` | そのモニターを 5 秒取り込み、フレームの数と、枠を消す設定が通ったかを出す |
-| `encoders` | H.264 のエンコーダーの一覧と、使えるプロパティを出す |
-| `encode <識別子>` | 5 秒取り込んで圧縮し、フレームの数・バイト数・かかった時間を出す |
-| `detach <識別子>` / `attach <識別子>` | モニターをデスクトップから外す・付ける(確認あり) |
-| `touch <x> <y>` | その位置にタッチを注入して試す(確認あり) |
-| `adb` | adb の場所と版、つながっている端末を出す(シリアルは伏せる) |
-| `clock` | ミリ秒まで出る時計のウィンドウを出す(撮影で遅延を測るため) |
-| `tls <port>` | 127.0.0.1 に TLS の待ち受けを 60 秒開く(端末からの接続テスト用) |
+### Android の probe
 
-注意:
+- JDK 17
+- Android SDK(compileSdk 35)
+- `android\local.properties` に SDK の場所を書きます(このファイルはリポジトリに入れません)。
 
-- `detach` は、実際にモニターをデスクトップから外します。主モニターと最後の 1 枚は断りますが、仮想ディスプレイで試してください。
-- `touch` は、実際にタッチを注入します。
-- `capture` と `encode` は、取り込んだ絵をファイルに保存しません。出すのは数と時間だけです。
-- Probe の出力には、PC のモニターの名前などが入ります。そのまま公開の場所に貼らないでください。
-
-## いまある物: Android 側の Probe
-
-端末の `video/avc` のデコーダーの一覧と、候補の大きさごとに使えるか(configure も試す)、画面の大きさを調べて画面に出します。「TLS のテスト」で、PC の `tls` への TLS の接続を試します。出した行は logcat(タグ `TabSpanProbe`)にも出ます。
-
-ビルド(JDK 17 と Android SDK。`android\local.properties` に `sdk.dir` を書いておく):
+```properties
+sdk.dir=C\:\\Android\\Sdk
+```
 
 ```powershell
 cd android
 .\gradlew.bat assembleDebug
 ```
 
-TLS のテストの手順:
+APK は `android\probe\build\outputs\apk\debug\probe-debug.apk` に出ます。
 
-1. PC で `TabSpan.Probe.exe tls 47815` を動かす。
-2. `adb reverse tcp:47815 tcp:47815` で端末の 127.0.0.1:47815 を PC へつなぐ。
-3. アプリの「TLS のテスト」を押す。adb からなら `adb shell am start -n io.github.takosasidev.tabspan.probe/.MainActivity --es action tls --ei port 47815`。
-4. PC と端末の両方に出る証明書の指紋(SHA-256)を見比べる。
+## 安全とプライバシー
 
-復号のテストの手順(v0.0.2 から):
+- **保存しない**: 取り込んだ画面、圧縮した映像、測定の結果をファイルに書きません。結果はコンソールと端末の画面(と logcat)に出るだけです。`tls` の証明書の鍵は、Windows の利用者の鍵の置き場に一時的に置かれ、Probe が終わると消えます。
+- **外へ通信しない**: PC の `tls` は 127.0.0.1 だけで待ち受けます。端末のアプリがつなぐ先も 127.0.0.1 だけです。端末のアプリの権限は INTERNET だけです。
+- **TLS のテストは証明書を検査しません**(測定用の扱い)。相手が本当に自分の PC かは、両方に出る指紋を見比べて確かめてください。
+- **`detach` は実在のモニターも外せます**。外す前に「同じ位置と大きさに戻す命令」が出るので、`y` を押す前に控えてください。主モニターと、付いている最後の 1 枚は外しません。
+- **出力に PC の中身が入ります**。モニターやアダプターの名前、デバイス ID などが出ます。そのまま公開の場所に貼らないでください。
 
-1. 試したい H.264 の映像(生の Annex B、各アクセス ユニットの先頭に AUD)を、`tabspan_<幅>x<高さ>_<fps>.h264` の名前で `/sdcard/Android/data/io.github.takosasidev.tabspan.probe/files/` に置く。例: `ffmpeg -f lavfi -i testsrc2=size=1280x800:rate=30 -t 5 -c:v libx264 -profile:v main -bf 0 -g 60 -b:v 8M -x264-params aud=1 -f h264 tabspan_1280x800_30.h264`
-2. アプリの「復号のテスト」を押す。adb からなら `adb shell am start -n io.github.takosasidev.tabspan.probe/.MainActivity --es action decode-test`。
-3. デコーダーごとに、できるだけ速く入れたときの fps と、実時間で入れたときの遅れ(入れてから出るまで)が出て、最後に表になります。
+## 取扱説明書
 
-注意:
-
-- 権限は INTERNET だけです。つなぐ先は 127.0.0.1 だけです。
-- TLS のテストは証明書を検査しません(probe だけの扱い)。相手は指紋を見比べて確かめてください。
-
-## ダウンロード
-
-[Releases](https://github.com/takosasi-dev/tab-span/releases) のいちばん新しいプレリリースに、Android の probe の APK だけを置いています。
-
-- APK は**デバッグ用の鍵で署名した仮の物**です。正式な鍵に変えた後は、いったん消して入れ直す必要があります。
-- PC 側の exe は配りません。隣に入る Windows SDK の DLL の再配布の条件を確かめ終えていないためです。上の手順でソースからビルドしてください。
+PC と端末の使い方を、手順と画面つきでまとめた取扱説明書(PDF、日本語)を、[Releases](https://github.com/takosasi-dev/tab-span/releases) に `TabSpan-Probe-manual-ja.pdf` として置いています。説明書の元は [`docs/manual/`](docs/manual/) にあります。
 
 ## ライセンス
 

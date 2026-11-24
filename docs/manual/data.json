@@ -1,0 +1,14 @@
+{
+  "_meta": { "generated_by": "手で書いた(TabSpan の docs/manual)" },
+  "page": { "size": "A4", "orientation": "portrait", "expected_count": 15 },
+  "fonts": { "required": ["BIZ UDPGothic", "Yu Gothic"] },
+  "images": { "dir": "../images" },
+  "expect": { "texts": ["まだ PC の画面を端末に映すことはできません", "TLS のテスト", "復号のテスト", "片付け"] },
+  "app": {
+    "name": "TabSpan",
+    "subtitle": "拡張モニター 測定用ツール(Phase 0)",
+    "version": "0.0.2",
+    "date": "2026-11-24",
+    "repo": "https://github.com/takosasi-dev/tab-span"
+  }
+}
