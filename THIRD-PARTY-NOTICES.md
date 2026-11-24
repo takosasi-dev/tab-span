@@ -1,6 +1,6 @@
 # Third-party notices
 
-TabSpan 自身のコードは MIT です。ビルドのときに NuGet から取る物と、そのライセンスは次のとおりです(2026-11-24 に各パッケージの nuspec とライセンスの本文で確認)。
+TabSpan 自身のコードは MIT です。ビルドのときに NuGet と Maven から取る物と、そのライセンスは次のとおりです(2026-11-24 に確認。PC 側は各パッケージの nuspec とライセンスの本文、Android 側は jar に入っているライセンスの本文か pom。kotlin-stdlib の jar には記述が無いため、Kotlin のライセンス Apache-2.0 によります)。
 
 ## PC 側(ビルドの時だけ使う物。出力には入らない)
 
@@ -19,6 +19,20 @@ TabSpan 自身のコードは MIT です。ビルドのときに NuGet から取
 
 この 2 つの DLL は、リポジトリには入っていません(ソースだけを置いています)。ビルドすると exe の隣に出ます。ビルド済みの exe を配る前に、再配布の条項を確かめます(まだ確かめていません)。
 
-## Android 側
+## Android 側(probe の APK に入る物)
 
-まだありません。
+| ライブラリ | 版 | ライセンス | 役目 |
+|---|---|---|---|
+| org.jetbrains.kotlin:kotlin-stdlib | 2.0.21 | Apache-2.0 | Kotlin の標準ライブラリ |
+| org.jetbrains:annotations | 13.0 | Apache-2.0 | kotlin-stdlib が使う注釈 |
+
+## Android 側(テストの時だけ使う物。APK には入らない)
+
+| ライブラリ | 版 | ライセンス | 役目 |
+|---|---|---|---|
+| junit:junit | 4.13.2 | EPL-1.0 | 単体テスト |
+| org.hamcrest:hamcrest-core | 1.3 | BSD-3-Clause | junit が使う |
+
+この 2 つは、作者の判断でテスト専用の例外にしました。APK には入りません。
+
+版は `cd android; .\gradlew.bat -q :probe:dependencies --configuration releaseRuntimeClasspath` で確かめられます。

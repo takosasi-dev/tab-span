@@ -3,7 +3,7 @@
 Turns an Android tablet into an extended monitor for a Windows PC. [日本語](README.md)
 
 > **Work in progress. Nothing here is usable yet.**
-> The repository currently contains only the PC-side measurement tool (probe) used to settle the design. The PC app and the Android app are not written yet.
+> The repository currently contains only the measurement tools (probes) used to settle the design, for the PC side and the Android side. The app itself is not written yet.
 
 ## What it will be
 
@@ -20,7 +20,7 @@ Design rules:
 
 | Phase | Content | State |
 |---|---|---|
-| Phase 0 | Probes | PC side builds. **It has never been run yet.** Android side not written |
+| Phase 0 | Probes | PC side and Android side written. Ran monitors, encoders, capture, encode (software), adb, tls and the Android probe on a home PC and a dtab (Android 7.0). detach / attach, touch, clock and virtual displays are still to do |
 | Phase 1–6 | The app | Not started |
 
 ## What is here now: the PC-side probe
@@ -51,6 +51,36 @@ Notes:
 - `touch` really injects touch input.
 - `capture` and `encode` never write captured images to disk. They only print counts and timings.
 - Probe output contains monitor names from your PC. Do not paste it in public places as is.
+
+## What is here now: the Android-side probe
+
+Lists the device's `video/avc` decoders, checks each candidate size (including a configure attempt), and shows the screen size. "TLS のテスト" (TLS test) tries a TLS connection to the PC's `tls`. Every line is also written to logcat (tag `TabSpanProbe`).
+
+Build (JDK 17 and the Android SDK; put `sdk.dir` in `android\local.properties`):
+
+```powershell
+cd android
+.\gradlew.bat assembleDebug
+```
+
+TLS test:
+
+1. On the PC, run `TabSpan.Probe.exe tls 47815`.
+2. Run `adb reverse tcp:47815 tcp:47815` so the device's 127.0.0.1:47815 reaches the PC.
+3. Tap "TLS のテスト" in the app, or from adb: `adb shell am start -n io.github.takosasidev.tabspan.probe/.MainActivity --es action tls --ei port 47815`.
+4. Compare the certificate fingerprint (SHA-256) shown on the PC and on the device.
+
+Notes:
+
+- The only permission is INTERNET, and it only connects to 127.0.0.1.
+- The TLS test does not validate the certificate (probe only). Check the peer by comparing the fingerprints.
+
+## Download
+
+The v0.0.1 pre-release on [Releases](https://github.com/takosasi-dev/tab-span/releases) has the Android probe APK only.
+
+- The APK is **a temporary build signed with a debug key**. Once it moves to the real key you will need to uninstall it and install again.
+- The PC exe is not distributed, because the redistribution terms of the Windows SDK DLLs that ship next to it have not been checked yet. Build it from source as above.
 
 ## License
 
