@@ -1,0 +1,15 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+
+[*.{bat,cmd}]
+end_of_line = crlf
+
+[*.cs]
+indent_style = space
+indent_size = 4
+# 例外を握りつぶさない(広い catch は警告。警告はビルドのエラーにしている)
+dotnet_diagnostic.CA1031.severity = warning

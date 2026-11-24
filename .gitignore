@@ -1,0 +1,21 @@
+# .NET
+bin/
+obj/
+.vs/
+*.user
+
+# Android
+.gradle/
+build/
+local.properties
+*.keystore
+*.jks
+
+# 配布物はリポジトリに入れない(GitHub の Release に添付する)
+*.exe
+*.apk
+*.aab
+dist/
+
+# Probe の出力(PC の中身が入るので入れない)
+probe-output*

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://aka.ms/CsWin32.schema.json",
+  "comInterop": {
+    "preserveSigMethods": [
+      "IMFTransform",
+      "ICodecAPI",
+      "IMFMediaEventGenerator.GetEvent",
+      "IMFAttributes.GetUINT32",
+      "IMFActivate.GetUINT32",
+      "IMFSample.GetUINT32",
+      "IMFSample.GetSampleTime"
+    ]
+  }
+}
