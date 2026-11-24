@@ -29,6 +29,7 @@ return args switch
     ["adb"] => AdbProbe.Run(),
     ["clock"] => ClockProbe.Run(),
     ["tls", var port] => TlsProbe.Run(port),
+    ["serve", .. var rest] => ServeCommand.Run(rest),
     _ => Usage(),
 };
 
@@ -46,6 +47,8 @@ static int Usage()
           adb                         adb の場所・adb version・adb devices を出す(シリアルは伏せる)
           clock                       ミリ秒まで出る時計のウィンドウを出す(撮影で遅延を測るため)
           tls <port>                  自己署名の証明書(ECDSA P-256)で、127.0.0.1 に TLS 1.2 以上の待ち受けを 60 秒開く
+          serve [--monitor <識別子>] [--fps 30|60] [--bitrate <Mbps>] [--seconds <N>] [--pair] [--approve-code <6桁>] [--no-adb] [--software]
+                                      窓を出さずに App と同じ部品で待ち受けて映す(TABSPAN_DATA_DIR で置き場を切り替えられる)
         """);
     return 2;
 }

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App_Title" xml:space="preserve"><value>TabSpan</value></data>
+  <data name="Main_State" xml:space="preserve"><value>状態:</value></data>
+  <data name="Main_Device" xml:space="preserve"><value>端末:</value></data>
+  <data name="Main_Video" xml:space="preserve"><value>映像:</value></data>
+  <data name="Main_Disconnect" xml:space="preserve"><value>切断</value></data>
+  <data name="Main_Source" xml:space="preserve"><value>映す画面</value></data>
+  <data name="Main_AddDevice" xml:space="preserve"><value>端末を追加</value></data>
+  <data name="Main_Refresh" xml:space="preserve"><value>一覧を更新</value></data>
+  <data name="Main_NoDevice" xml:space="preserve"><value>つないでいる端末はありません</value></data>
+  <data name="Main_DeviceLine" xml:space="preserve"><value>{0}  ({1})</value></data>
+  <data name="Main_VideoLine" xml:space="preserve"><value>{0}x{1}  {2} fps  {3}</value></data>
+  <data name="Link_Usb" xml:space="preserve"><value>USB</value></data>
+  <data name="Link_Lan" xml:space="preserve"><value>LAN</value></data>
+  <data name="Encoder_Hardware" xml:space="preserve"><value>ハードウェア エンコーダー</value></data>
+  <data name="Encoder_Software" xml:space="preserve"><value>ソフトウェア エンコーダー</value></data>
+  <data name="State_Waiting" xml:space="preserve"><value>待機中</value></data>
+  <data name="State_Streaming" xml:space="preserve"><value>映しています</value></data>
+  <data name="State_Paused" xml:space="preserve"><value>一時停止中</value></data>
+  <data name="State_Problem" xml:space="preserve"><value>問題があります</value></data>
+  <data name="Monitor_Line" xml:space="preserve"><value>{0}: {1}   {2}x{3}{4}</value></data>
+  <data name="Monitor_Primary" xml:space="preserve"><value>主</value></data>
+  <data name="Monitor_Virtual" xml:space="preserve"><value>仮想</value></data>
+  <data name="Monitor_Extend" xml:space="preserve"><value>拡張</value></data>
+  <data name="Monitor_Detached" xml:space="preserve"><value>外れています。つなぐと取り付けます</value></data>
+  <data name="Hint_UsbUnavailable" xml:space="preserve"><value>USB の機能が止まっているため追加できません</value></data>
+  <data name="Hint_NoDevices" xml:space="preserve"><value>まだ端末がありません。端末を USB でつないで、[端末を追加] を押してください</value></data>
+  <data name="Hint_ChooseSource" xml:space="preserve"><value>映す画面を選んでください</value></data>
+  <data name="Banner_Port" xml:space="preserve"><value>ポート {0} を使えません。設定でポートを変えてください</value></data>
+  <data name="Banner_PairingLost" xml:space="preserve"><value>ペアリングの情報を読めませんでした。端末を追加し直してください</value></data>
+  <data name="Banner_AdbMissing" xml:space="preserve"><value>adb が見つかりません。USB でつなぐには adb が要ります</value></data>
+  <data name="Banner_Unauthorized" xml:space="preserve"><value>端末の画面で『USB デバッグを許可しますか』に『許可』を押してください</value></data>
+  <data name="Banner_ReverseFailing" xml:space="preserve"><value>端末へのポートの転送(adb reverse)が続けて失敗しています</value></data>
+  <data name="Banner_SoftwareEncoder" xml:space="preserve"><value>ハードウェアのエンコーダーを使えないため、CPU で圧縮しています。重いときは解像度の上限を下げてください</value></data>
+  <data name="Footer" xml:space="preserve"><value>USB: {0}    LAN: オフ    ポート {1}</value></data>
+  <data name="Footer_UsbOn" xml:space="preserve"><value>待ち受け中</value></data>
+  <data name="Footer_UsbOff" xml:space="preserve"><value>止まっています</value></data>
+  <data name="Pair_Title" xml:space="preserve"><value>端末を追加</value></data>
+  <data name="Pair_Step1" xml:space="preserve"><value>1. 端末を USB でつなぐ</value></data>
+  <data name="Pair_Step2" xml:space="preserve"><value>2. 端末の TabSpan を開いて「PC を追加」を押す</value></data>
+  <data name="Pair_Waiting" xml:space="preserve"><value>端末からの要求を待っています…  残り {0}</value></data>
+  <data name="Pair_TimedOut" xml:space="preserve"><value>時間切れになりました</value></data>
+  <data name="Pair_Request" xml:space="preserve"><value>{0} からの要求です。端末に出ている番号と同じなら [許可] を押してください</value></data>
+  <data name="Pair_Added" xml:space="preserve"><value>{0} を追加しました</value></data>
+  <data name="Pair_Denied" xml:space="preserve"><value>追加しませんでした</value></data>
+  <data name="Pair_Approve" xml:space="preserve"><value>許可</value></data>
+  <data name="Pair_Deny" xml:space="preserve"><value>拒否</value></data>
+  <data name="Pair_Retry" xml:space="preserve"><value>もう一度</value></data>
+  <data name="Pair_Close" xml:space="preserve"><value>閉じる</value></data>
+</root>

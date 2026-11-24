@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 画面の文言(日本語)。values と同じキーをそろえる。 -->
+<resources>
+    <string name="home_no_pc">PC がまだありません。PC の TabSpan で『端末を追加』を開き、この端末を USB でつないで、下のボタンを押してください</string>
+    <string name="btn_connect">つなぐ</string>
+    <string name="btn_cancel">やめる</string>
+    <string name="btn_add_pc">PC を追加</string>
+    <string name="status_connecting">つないでいます…(USB)</string>
+    <string name="status_reconnecting">接続が切れました。つなぎ直しています…(%1$d 秒)</string>
+    <string name="status_not_found">PC が見つかりません。PC の TabSpan が動いているか、USB がつながっているか、LAN 接続がオンかを確かめてください</string>
+
+    <string name="reason_version">版が合いません。PC 側(%1$s)と端末側(%2$s)を同じ版にしてください</string>
+    <string name="reason_auth">この PC とのペアリングが外れています。『PC を追加』からやり直してください</string>
+    <string name="reason_busy">PC は別の端末とつながっています</string>
+    <string name="reason_blocked">しばらく待ってから、もう一度つないでください</string>
+    <string name="reason_decoder">この端末では映像を再生できませんでした</string>
+    <string name="reason_no_source">PC 側で映す画面が選ばれていません</string>
+    <string name="reason_key_changed">PC の鍵が変わっています。ペアリングをやり直してください</string>
+    <string name="reason_other">PC に断られました(%1$s)</string>
+
+    <string name="pair_title">PC を追加</string>
+    <string name="pair_searching">PC を探しています… USB でつながっているか確かめてください</string>
+    <string name="pair_compare">PC の画面に出ている番号と同じか確かめてください</string>
+    <string name="pair_hint">同じなら、PC 側で「許可」を押します</string>
+    <string name="pair_done">%1$s を追加しました</string>
+    <string name="pair_usb_only">USB でつないでから、やり直してください</string>
+    <string name="pair_not_accepting">PC の TabSpan で『端末を追加』を開いてから、やり直してください</string>
+    <string name="pair_full">PC 側の登録が上限です</string>
+    <string name="pair_denied">PC 側で許可されませんでした</string>
+    <string name="pair_busy">PC は別の端末のペアリング中です</string>
+    <string name="pair_no_connection">PC につながりません。USB デバッグが許可されているか、PC の TabSpan が動いているかを確かめてください</string>
+    <string name="pair_failed">ペアリングが途中で切れました。もう一度やり直してください</string>
+
+    <string name="video_waiting">映像を待っています…</string>
+    <string name="video_paused">PC 側で画面が止まっています</string>
+</resources>

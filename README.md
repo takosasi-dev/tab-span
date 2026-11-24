@@ -5,8 +5,8 @@ Android の端末を、Windows PC の拡張モニターにするソフト(開発
 [English](README.en.md) | 日本語
 
 > [!IMPORTANT]
-> **開発中です。まだ PC の画面を端末に映すことはできません。**
-> いまこのリポジトリにあるのは、設計を決めるための **測定用ツール(Phase 0 の Probe)** だけです。PC の画面を端末に映すアプリ本体は、まだありません。
+> **開発中です。いまは PC の 1 枚のモニターを、USB で端末に複製して映せるところまでです。**
+> タッチ・拡張(仮想ディスプレイ)・LAN は、まだありません。
 
 ## 目次
 
@@ -14,6 +14,7 @@ Android の端末を、Windows PC の拡張モニターにするソフト(開発
 - [いまの状況](#いまの状況)
 - [測定でわかったこと](#測定でわかったこと)
 - [画面](#画面)
+- [本体を試す(v0.1.0)](#本体を試すv010)
 - [はじめ方](#はじめ方)
 - [測定用ツールの使い方](#測定用ツールの使い方)
 - [ソースからビルド](#ソースからビルド)
@@ -48,7 +49,19 @@ flowchart LR
 
 ## いまの状況
 
-最新は [v0.0.2](https://github.com/takosasi-dev/tab-span/releases/tag/v0.0.2)(プレリリース)です。中身は Phase 0(測定)の道具だけです。
+最新は [v0.1.0](https://github.com/takosasi-dev/tab-span/releases/tag/v0.1.0)(プレリリース)です。PC の 1 枚のモニターを、USB で端末に複製して映せます。確かめた端末は dtab d-01J(Android 7.0)だけです。
+
+| Phase | 中身 | 状態 |
+|---|---|---|
+| 0 | 測定と基準取り(Probe) | 一部済み(下の内訳) |
+| 1 | 接続: TLS・ペアリング・端末の台帳・adb の reverse | 実装済み。dtab d-01J でペアリングと接続が通った |
+| 2 | 映像(USB): 取り込み・圧縮・送信・端末での復号と表示 | 一部済み。実在のモニターの複製は dtab d-01J で映った。仮想ディスプレイ(拡張)はこれから。PC のハードウェアのエンコーダーはまだ通らず、ソフトウェアで圧縮している |
+| 3 | タッチ | これから |
+| 4 | LAN・探索・仮想ディスプレイの取り外しと取り付け | これから |
+| 5 | 常駐と画面の仕上げ: トレイ・設定・診断・多重起動の防止・自動起動・英語の画面 | これから(いまの PC の画面は仮の物で、日本語だけ) |
+| 6 | 公開の一式と測定 | これから |
+
+Phase 0 の内訳:
 
 | Phase 0 の中身 | 状態 |
 |---|---|
@@ -66,12 +79,12 @@ flowchart LR
 | 時計(`clock`)を撮影して遅延を測る | これから |
 | 仮想ディスプレイでの試し | これから |
 | spacedesk との比べ | これから |
-| アプリ本体(画面を映す・タッチを返す) | 未着手 |
 
 ## 測定でわかったこと
 
 端末は dtab d-01J(Android 7.0)です。
 
+- **本体で映したときの遅れ**: 1920x1080@30 で、PC で取り込んでから端末で復号されるまでの遅れの中央値は約 16 ms、捨てたフレームは 0 でした(PC はソフトウェアのエンコーダー)。端末の画面に絵が出るまでの時間は含みません。60 fps を選ぶと、端末のデコーダーが申告する範囲(1280x800)に収めるため、1280x720 に縮めて送ります。
 - **TLS**: 端末から USB(`adb reverse`)経由で PC の `tls` へ、TLS 1.2(ECDHE-ECDSA、AES-256-GCM)でつながりました。
 - **復号**: 端末のハードウェアのデコーダー(`OMX.IMG.MSVDX.Decoder.AVC`)は、試した 1280x720〜2560x1600 の 30 fps と 60 fps を全部、実時間より速く復号できました。デコーダー自身の申告では「不可」だった大きさ(1920x1080@60、1920x1200、2560x1440、2560x1600)も含みます。
 - **ソフトウェアのデコーダー**: `OMX.google.h264.decoder` は 2560x1600 で約 48 fps、遅れは 90〜200 ms でした。
@@ -99,14 +112,83 @@ Android の probe を dtab d-01J で開いたところです。起動すると�
 
 <img src="docs/images/android-probe.png" alt="Android の probe の画面。上にポートの欄と「TLS のテスト」「復号のテスト」のボタン、下に端末とデコーダーの調べ物の結果が並ぶ" width="360">
 
+## 本体を試す(v0.1.0)
+
+PC の 1 枚のモニターを、USB でつないだ端末に複製して映します。タッチ・拡張・LAN はまだありません。
+
+> [!WARNING]
+> PC 側の画面(`TabSpan.App`)は仮の物で、作者の手元でもまだ起動して確かめていません。部品の組み立てと、同じ部品で動く窓なしの `TabSpan.Probe serve` での映像は確かめました([下](#窓を出さずに試すtabspanprobe-serve))。
+
+### 用意する物
+
+- Windows 11(x64)の PC と、.NET 10 SDK(PC 側はビルド済みの物を配っていません。exe の隣に入る Windows SDK の DLL の再配布の条件を、まだ確かめ終えていないためです)
+- adb。PATH に通すか、winget で入れます(`winget install Google.PlatformTools`)。TabSpan は PATH の次に、winget の既定の場所 `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Google.PlatformTools_*\platform-tools\adb.exe` を探します。
+- Android 7.0 以上の端末。開発者向けオプションで USB デバッグをオンにしておきます。
+
+### 入れる
+
+1. PC 側をビルドします。
+
+   ```powershell
+   dotnet build pc\TabSpan.sln -c Release
+   ```
+
+   `pc\src\TabSpan.App\bin\Release\net10.0-windows10.0.22621.0\win-x64\TabSpan.App.exe` が出ます。
+2. [v0.1.0 の Release](https://github.com/takosasi-dev/tab-span/releases/tag/v0.1.0) から `TabSpan-v0.1.0-android.apk` を取り、端末に入れます(`adb install TabSpan-v0.1.0-android.apk`)。PC 側と端末側は同じ版にします。
+
+> [!NOTE]
+> この APK も **debug の鍵で署名した仮の物** です。正式な鍵に変えた後は、いったん消して入れ直す必要があります。
+
+### 初めてつなぐ
+
+1. 端末を USB で PC につなぎます。端末に「USB デバッグを許可しますか」が出たら「許可」を押します。
+2. PC で `TabSpan.App.exe` を起動します。管理者で動かす必要はありません。
+3. 「映す画面」の一覧から、映すモニターを選びます。
+4. 「端末を追加」を押します。端末からの要求を待つ窓が開きます。
+5. 端末で TabSpan を開き、「PC を追加」を押します。
+6. PC と端末の両方に 6 桁の番号が出ます。同じなら、PC で「許可」を押します。
+7. 端末が自動で PC につながり、選んだモニターが映ります。
+
+2 回目からは、USB でつないで PC の TabSpan を起動しておけば、端末で TabSpan を開くだけで自動でつながります。
+
+### 止める
+
+- 端末で戻るボタンを押すか、TabSpan を裏に回すと切れます。
+- PC で「切断」を押すと、いまの接続を切ります。PC の TabSpan の窓を閉じると終わります(端末に終わりを知らせ、adb の reverse を外してから終わります)。
+
+### データの置き場
+
+| 場所 | 中身 |
+|---|---|
+| `%APPDATA%\TabSpan` | 設定(`settings.json`)、PC の識別の鍵(`identity.bin`。Windows の DPAPI で、その利用者だけが読めるように守る)、ペアリングした端末の台帳(`devices.json`) |
+| `%LOCALAPPDATA%\TabSpan\logs` | ログ(`tabspan-<日付>.log`。1 ファイル 5 MB で切り替え、14 日より古い物は起動時に消す) |
+| 端末の TabSpan のアプリの専用領域 | 端末の識別子と、ペアリングした PC の情報 |
+
+ペアリングをやり直したいときは、端末の設定で TabSpan のアプリのデータを消してから、「初めてつなぐ」の手順をもう一度行います(いまは端末側に PC を消す画面がありません)。
+
+### 窓を出さずに試す(`TabSpan.Probe serve`)
+
+`TabSpan.Probe.exe serve` は、App と同じ部品で、窓を出さずに待ち受けて映します。データの置き場も App と同じです。
+
+```powershell
+# 初回: ペアリングの受け付けを 120 秒開く
+TabSpan.Probe.exe serve --pair
+# 2 回目から
+TabSpan.Probe.exe serve
+```
+
+`--pair` を付けると、端末で「PC を追加」を押したときに `PAIRING CODE <6 桁>` が出ます。端末に出ている 6 桁を標準入力に打つと、同じ番号のときだけ許可します。`--approve-code <6 桁>` で先に渡すこともできます。ほかに `--monitor <識別子>`(映すモニター。`monitors` が出す `DeviceName`)、`--fps 30|60`、`--bitrate <Mbps>`、`--seconds <N>`、`--software`(ソフトウェアのエンコーダーだけを使う)、`--no-adb`(adb の reverse を自分で張る)があります。Ctrl+C か `q` で終わります。
+
 ## はじめ方
+
+ここからは、設計を決めるための測定用ツール(Phase 0 の Probe)の話です。
 
 ### Android の probe を入れる
 
 対象は Android 7.0 以上です。
 
-1. [v0.0.2 の Release](https://github.com/takosasi-dev/tab-span/releases/tag/v0.0.2) から `TabSpan-Probe-v0.0.2-android.apk` を取ります。
-2. 端末に入れます。PC から入れるなら `adb install TabSpan-Probe-v0.0.2-android.apk`。端末で直接開く場合は、提供元の不明なアプリを許す設定が要ります(場所は機種で違います)。
+1. [v0.1.0 の Release](https://github.com/takosasi-dev/tab-span/releases/tag/v0.1.0) から `TabSpan-Probe-v0.1.0-android.apk` を取ります(probe は v0.0.2 から変えていません)。
+2. 端末に入れます。PC から入れるなら `adb install TabSpan-Probe-v0.1.0-android.apk`。端末で直接開く場合は、提供元の不明なアプリを許す設定が要ります(場所は機種で違います)。
 3. 端末で「TabSpan Probe」を開きます。調べ物が自動で始まり、最後に `--- 終わり ---` が出ます。
 
 > [!NOTE]
@@ -198,7 +280,7 @@ PC:   接続 1 (12 秒後): TLS の版 = Tls12、暗号スイート = TLS_ECDHE_
 
 ## ソースからビルド
 
-### PC の Probe
+### PC(App と Probe)
 
 - Windows 11(x64)
 - .NET 10 SDK
@@ -208,9 +290,9 @@ PC:   接続 1 (12 秒後): TLS の版 = Tls12、暗号スイート = TLS_ECDHE_
 dotnet build pc\TabSpan.sln -c Release
 ```
 
-exe は `pc\src\TabSpan.Probe\bin\Release\net10.0-windows10.0.22621.0\win-x64\TabSpan.Probe.exe` に出ます。
+exe は `pc\src\TabSpan.App\bin\Release\net10.0-windows10.0.22621.0\win-x64\TabSpan.App.exe` と `pc\src\TabSpan.Probe\bin\Release\net10.0-windows10.0.22621.0\win-x64\TabSpan.Probe.exe` に出ます。
 
-### Android の probe
+### Android(本体と probe)
 
 - JDK 17
 - Android SDK(compileSdk 35)
@@ -225,11 +307,20 @@ cd android
 .\gradlew.bat assembleDebug
 ```
 
-APK は `android\probe\build\outputs\apk\debug\probe-debug.apk` に出ます。
+APK は `android\app\build\outputs\apk\debug\app-debug.apk`(本体)と `android\probe\build\outputs\apk\debug\probe-debug.apk`(probe)に出ます。
 
 ## 安全とプライバシー
 
-- **保存しない**: 取り込んだ画面、圧縮した映像、測定の結果をファイルに書きません。結果はコンソールと端末の画面(と logcat)に出るだけです。`tls` の証明書の鍵は、Windows の利用者の鍵の置き場に一時的に置かれ、Probe が終わると消えます。
+### 本体(App・`serve`・端末の TabSpan)
+
+- **映像を保存しない**: 取り込んだ画面と圧縮した映像はファイルに書きません。
+- **残す物**: 設定・PC の識別の鍵・ペアリングした端末の台帳と、ログを残します([データの置き場](#データの置き場))。識別の鍵は Windows の DPAPI で、その利用者だけが読めるように守ります。ログには映像・タッチの座標・トークン・秘密鍵を書かない作りです。
+- **外へ通信しない**: PC は 127.0.0.1 だけで待ち受けます(既定のポートは 47815)。端末は USB(adb の reverse)を通って、そこへ TLS でつなぎます。端末のアプリの権限は INTERNET だけです。
+- **ペアリング**: USB でつないだ端末からしか受け付けません。PC と端末に出る 6 桁が同じことを見て、PC で「許可」を押した端末だけを台帳に入れます。
+
+### 測定用ツール(Probe)
+
+- **保存しない**: 取り込んだ画面、圧縮した映像、測定の結果をファイルに書きません(`serve` は本体と同じ扱いです)。結果はコンソールと端末の画面(と logcat)に出るだけです。`tls` の証明書の鍵は、Windows の利用者の鍵の置き場に一時的に置かれ、Probe が終わると消えます。
 - **外へ通信しない**: PC の `tls` は 127.0.0.1 だけで待ち受けます。端末のアプリがつなぐ先も 127.0.0.1 だけです。端末のアプリの権限は INTERNET だけです。
 - **TLS のテストは証明書を検査しません**(測定用の扱い)。相手が本当に自分の PC かは、両方に出る指紋を見比べて確かめてください。
 - **`detach` は実在のモニターも外せます**。外す前に「同じ位置と大きさに戻す命令」が出るので、`y` を押す前に控えてください。主モニターと、付いている最後の 1 枚は外しません。
@@ -237,7 +328,7 @@ APK は `android\probe\build\outputs\apk\debug\probe-debug.apk` に出ます。
 
 ## 取扱説明書
 
-PC と端末の使い方を、手順と画面つきでまとめた取扱説明書(PDF、日本語)を、[Releases](https://github.com/takosasi-dev/tab-span/releases) に `TabSpan-Probe-manual-ja.pdf` として置いています。説明書の元は [`docs/manual/`](docs/manual/) にあります。
+PC と端末の使い方を、手順と画面つきでまとめた取扱説明書(PDF、日本語)を、[Releases](https://github.com/takosasi-dev/tab-span/releases) に添付しています。説明書の元は [`docs/manual/`](docs/manual/) にあります。
 
 ## ライセンス
 

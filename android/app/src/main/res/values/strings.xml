@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Screen text (English). The Japanese text in values-ja is the source; keep the same keys in both. -->
+<resources>
+    <string name="app_name" translatable="false">TabSpan</string>
+
+    <string name="home_no_pc">No PC yet. Open \"Add device\" in TabSpan on the PC, connect this tablet by USB, and press the button below.</string>
+    <string name="btn_connect">Connect</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_add_pc">Add PC</string>
+    <string name="status_connecting">Connecting… (USB)</string>
+    <string name="status_reconnecting">Connection lost. Reconnecting… (%1$d s)</string>
+    <string name="status_not_found">PC not found. Check that TabSpan is running on the PC, that USB is connected, and that LAN connection is on.</string>
+
+    <string name="reason_version">Versions do not match. Use the same version on the PC (%1$s) and this tablet (%2$s).</string>
+    <string name="reason_auth">This PC is no longer paired. Pair again with \"Add PC\".</string>
+    <string name="reason_busy">The PC is connected to another device.</string>
+    <string name="reason_blocked">Please wait a while and connect again.</string>
+    <string name="reason_decoder">This tablet could not play the video.</string>
+    <string name="reason_no_source">No screen to show is selected on the PC.</string>
+    <string name="reason_key_changed">The PC\'s key has changed. Pair again.</string>
+    <string name="reason_other">The PC refused the connection (%1$s).</string>
+
+    <string name="pair_title">Add PC</string>
+    <string name="pair_searching">Looking for the PC… Check that it is connected by USB.</string>
+    <string name="pair_compare">Check that this number matches the one on the PC screen.</string>
+    <string name="pair_hint">If it matches, press \"Allow\" on the PC.</string>
+    <string name="pair_done">Added %1$s.</string>
+    <string name="pair_usb_only">Connect by USB and try again.</string>
+    <string name="pair_not_accepting">Open \"Add device\" in TabSpan on the PC and try again.</string>
+    <string name="pair_full">The PC cannot register more devices.</string>
+    <string name="pair_denied">The PC did not allow this device.</string>
+    <string name="pair_busy">The PC is pairing with another device.</string>
+    <string name="pair_no_connection">Cannot reach the PC. Check that USB debugging is allowed and that TabSpan is running on the PC.</string>
+    <string name="pair_failed">Pairing was interrupted. Please try again.</string>
+
+    <string name="video_waiting">Waiting for video…</string>
+    <string name="video_paused">The screen on the PC is paused.</string>
+    <string name="overlay_format" translatable="false">%1$d fps  %2$d ms  drop %3$d  %4$dx%5$d</string>
+</resources>

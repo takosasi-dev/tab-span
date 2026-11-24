@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
+    <RootNamespace>TabSpan.Platform</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.CsWin32" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TabSpan.Core\TabSpan.Core.csproj" />
+    <InternalsVisibleTo Include="TabSpan.Platform.Tests" />
+  </ItemGroup>
+</Project>

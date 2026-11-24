@@ -8,4 +8,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.CsWin32" PrivateAssets="all" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- serve が App と同じ部品で待ち受けて映すため -->
+    <ProjectReference Include="..\TabSpan.Link\TabSpan.Link.csproj" />
+    <ProjectReference Include="..\TabSpan.Platform\TabSpan.Platform.csproj" />
+  </ItemGroup>
 </Project>

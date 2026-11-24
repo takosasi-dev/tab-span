@@ -1,0 +1,21 @@
+<Window x:Class="TabSpan.App.PairWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TabSpan.App"
+        Title="{local:Str Pair_Title}" Width="440" SizeToContent="Height" ResizeMode="NoResize" WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="20,16">
+        <TextBlock Text="{local:Str Pair_Title}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
+        <TextBlock Text="{local:Str Pair_Step1}" />
+        <TextBlock Text="{local:Str Pair_Step2}" Margin="0,0,0,16" />
+
+        <TextBlock x:Name="MessageText" TextWrapping="Wrap" Margin="0,0,0,8" />
+        <TextBlock x:Name="CodeText" FontFamily="Consolas" FontSize="40" HorizontalAlignment="Center" Margin="0,4,0,12" Visibility="Collapsed" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="DenyButton" Content="{local:Str Pair_Deny}" Padding="16,4" Visibility="Collapsed" Click="OnDeny" />
+            <Button x:Name="ApproveButton" Content="{local:Str Pair_Approve}" Padding="16,4" Margin="8,0,0,0" Visibility="Collapsed" IsEnabled="False" Click="OnApprove" />
+            <Button x:Name="RetryButton" Content="{local:Str Pair_Retry}" Padding="16,4" Margin="8,0,0,0" Visibility="Collapsed" Click="OnRetry" />
+            <Button x:Name="CloseButton" Content="{local:Str Pair_Close}" Padding="16,4" Margin="8,0,0,0" Click="OnClose" />
+        </StackPanel>
+    </StackPanel>
+</Window>
