@@ -10,6 +10,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.util.Log
+import android.view.MotionEvent
 import android.view.Display
 import android.view.Surface
 import androidx.annotation.StringRes
@@ -62,6 +63,12 @@ data class UiState(
     val firstFrame: Boolean = false,
     val paused: Boolean = false,
     val showOverlay: Boolean = true,
+    /** 映像の画面のメニュー(戻る操作で開く)。開いている間はタッチを送らない。 */
+    val menuOpen: Boolean = false,
+    /** 端末側のタッチのオン・オフ(メニュー)。 */
+    val deviceTouch: Boolean = true,
+    /** PC 側のタッチのオン・オフ(HelloAck.touchEnabled と Notice "touchEnabled")。 */
+    val pcTouch: Boolean = true,
     val fps: Int = 0,
     val latencyMs: Int = 0,
     val dropped: Int = 0,
@@ -88,6 +95,8 @@ class Connector private constructor(context: Context) {
     private var lastKeyRequestMs = -10_000L
     private var keyPending = false
     private var droppedTotal = 0
+    /** メインスレッドだけが触る。 */
+    private val touch = TouchMapper()
 
     // ---- 画面から呼ぶ(メインスレッド) ----
 
@@ -125,6 +134,44 @@ class Connector private constructor(context: Context) {
 
     fun toggleOverlay() {
         ui = ui.copy(showOverlay = !ui.showOverlay)
+    }
+
+    fun setMenu(open: Boolean) {
+        if (open) releaseTouches()
+        ui = ui.copy(menuOpen = open)
+    }
+
+    fun setDeviceTouch(on: Boolean) {
+        if (!on) releaseTouches()
+        ui = ui.copy(deviceTouch = on)
+    }
+
+    /** 映像の画面の MotionEvent。座標は [rect] と同じ面(映像の画面の左上が 0)。変わった指を 1 つの枠にまとめて送る。 */
+    fun onTouch(e: MotionEvent, rect: FitRect) {
+        // 映像の大きさ(StreamConfig)が来るまでは矩形が決まらないので送らない
+        if (!(ui.screen == Screen.VIDEO && streaming && ui.videoWidth > 0 && ui.pcTouch && ui.deviceTouch && !ui.menuOpen)) {
+            releaseTouches()
+            return
+        }
+        if (e.actionMasked == MotionEvent.ACTION_CANCEL) {
+            releaseTouches()
+            return
+        }
+        val index = e.actionIndex
+        val changed = ArrayList<TouchMapper.Contact>()
+        for (i in 0 until e.pointerCount) {
+            val id = e.getPointerId(i)
+            val x = e.getX(i)
+            val y = e.getY(i)
+            val c = when {
+                i != index -> touch.move(id, x, y, rect)
+                e.actionMasked == MotionEvent.ACTION_DOWN || e.actionMasked == MotionEvent.ACTION_POINTER_DOWN -> touch.down(id, x, y, rect)
+                e.actionMasked == MotionEvent.ACTION_UP || e.actionMasked == MotionEvent.ACTION_POINTER_UP -> touch.up(id, x, y, rect)
+                else -> touch.move(id, x, y, rect)
+            }
+            c?.let(changed::add)
+        }
+        sendTouch(changed)
     }
 
     fun surfaceChanged(surface: Surface?) = decoder.setSurface(surface)
@@ -196,10 +243,12 @@ class Connector private constructor(context: Context) {
                         if (ack.pcName != pc.pcName) store.save(pc.copy(pcName = ack.pcName))
                         Log.i(TAG, "session started")
                         tick = startTick(my, sock)
+                        main.post { if (alive(my)) touch.cancelAll() } // 前の接続で触れていた指を忘れる
                         update(my) {
                             it.copy(
                                 screen = Screen.VIDEO, busy = false, message = null, videoWidth = 0, videoHeight = 0,
                                 firstFrame = false, paused = false, fps = 0, latencyMs = 0, dropped = 0,
+                                menuOpen = false, pcTouch = ack.touchEnabled,
                             )
                         }
                     }
@@ -217,7 +266,18 @@ class Connector private constructor(context: Context) {
                     MessageType.BYE -> return refused(Messages.parseReason(frame.payload).reason, null, pc, streamed)
                     MessageType.NOTICE -> {
                         val n = Messages.parseNotice(frame.payload)
-                        if (n.kind == "paused") update(my) { it.copy(paused = n.value == true) }
+                        when (n.kind) {
+                            "paused" -> update(my) { it.copy(paused = n.value == true) }
+                            "touchEnabled" -> {
+                                val on = n.value == true
+                                main.post {
+                                    if (alive(my)) {
+                                        if (!on) releaseTouches()
+                                        ui = ui.copy(pcTouch = on)
+                                    }
+                                }
+                            }
+                        }
                     }
                     else -> Log.i(TAG, "skipped frame type ${frame.type}")
                 }
@@ -312,6 +372,25 @@ class Connector private constructor(context: Context) {
         }
     }
 
+    // ---- タッチ(メインスレッドから) ----
+
+    /** 触れている指を cancel にして送り(つながっていれば)、忘れる。 */
+    private fun releaseTouches() = sendTouch(touch.cancelAll())
+
+    private fun sendTouch(contacts: List<TouchMapper.Contact>) {
+        if (contacts.isEmpty()) return
+        val payload = TouchMapper.encode(contacts)
+        worker.execute {
+            if (streaming) {
+                try {
+                    socket?.send(MessageType.TOUCH, payload)
+                } catch (e: Exception) {
+                    // 切れたら読みの側が気づく
+                }
+            }
+        }
+    }
+
     // ---- ペアリング ----
 
     private fun pairLoop(my: Int) {
@@ -394,6 +473,7 @@ class Connector private constructor(context: Context) {
     /** 今の流れを止め、新しい世代の番号を返す。映していたら Bye(user) を送ってから閉じる。 */
     private fun stopCurrent(): Int {
         val my = ++gen
+        val cancels = touch.cancelAll()
         decoder.stop()
         val s = socket
         val wasStreaming = streaming
@@ -403,6 +483,7 @@ class Connector private constructor(context: Context) {
             worker.execute {
                 if (wasStreaming) {
                     try {
+                        if (cancels.isNotEmpty()) s.send(MessageType.TOUCH, TouchMapper.encode(cancels))
                         s.send(MessageType.BYE, Messages.toJson(ReasonMsg("user")))
                     } catch (e: Exception) {
                         // もう切れている

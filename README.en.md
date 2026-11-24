@@ -6,7 +6,7 @@ English | [日本語](README.md)
 
 > [!IMPORTANT]
 > **Work in progress. For now it can mirror one PC monitor to a device over USB.**
-> Touch, extending the desktop (virtual display) and LAN are not there yet.
+> Extending the desktop (virtual display) and LAN are not there yet.
 
 ## Contents
 
@@ -14,7 +14,7 @@ English | [日本語](README.md)
 - [Status](#status)
 - [What the measurements showed](#what-the-measurements-showed)
 - [Screenshot](#screenshot)
-- [Trying the app (v0.1.0)](#trying-the-app-v010)
+- [Trying the app (v0.2.0)](#trying-the-app-v020)
 - [Getting started](#getting-started)
 - [Using the probes](#using-the-probes)
 - [Building from source](#building-from-source)
@@ -49,14 +49,14 @@ Design rules:
 
 ## Status
 
-The latest release is [v0.1.0](https://github.com/takosasi-dev/tab-span/releases/tag/v0.1.0) (pre-release). It can mirror one PC monitor to a device over USB. The only device it has been checked on is a dtab d-01J (Android 7.0).
+The latest release is [v0.2.0](https://github.com/takosasi-dev/tab-span/releases/tag/v0.2.0) (pre-release). It can mirror one PC monitor to a device over USB, and you can operate the PC by touching the device. The only device it has been checked on is a dtab d-01J (Android 7.0).
 
 | Phase | What | State |
 |---|---|---|
 | 0 | Measurements and baseline (probes) | Partly done (breakdown below) |
 | 1 | Connection: TLS, pairing, device list, adb reverse | Implemented. Pairing and connecting worked on a dtab d-01J |
 | 2 | Video over USB: capture, encode, send, decode and show on the device | Partly done. Mirroring a real monitor showed up on a dtab d-01J. Virtual display (extending) still to do. No hardware encoder works on the PC yet, so it encodes in software |
-| 3 | Touch | To do |
+| 3 | Touch | Done. Checked on a dtab d-01J that touch points arrive converted to the right PC screen coordinates (checked without injecting). Operating the PC for real, and two fingers, are still to be checked by the author |
 | 4 | LAN, discovery, detaching and attaching the virtual display | To do |
 | 5 | Tray app and finished screens: tray, settings, diagnostics, single instance, start with Windows, English UI | To do (the current PC window is a stopgap, Japanese only) |
 | 6 | Release package and measurements | To do |
@@ -112,12 +112,12 @@ The Android probe open on a dtab d-01J. When it starts, it surveys the device an
 
 <img src="docs/images/android-probe.png" alt="The Android probe screen: a port field and the TLS test and decode test buttons at the top, and the device and decoder survey below" width="360">
 
-## Trying the app (v0.1.0)
+## Trying the app (v0.2.0)
 
-It mirrors one PC monitor to a device connected by USB. Touch, extending and LAN are not there yet.
+It mirrors one PC monitor to a device connected by USB. Touching the device touches the PC at that point. Extending and LAN are not there yet.
 
 > [!WARNING]
-> The PC window (`TabSpan.App`) is a stopgap, and even the author has not launched it to check it yet. What has been checked is how its parts fit together, and video through the windowless `TabSpan.Probe serve`, which runs the same parts ([below](#trying-it-without-a-window-tabspanprobe-serve)).
+> The PC window (`TabSpan.App`) is a stopgap. Up to v0.1.1 it crashed right after starting (fixed in v0.2.0). Its startup has been checked without showing a window, but the author has not looked at the window itself yet. Video and touch were checked through the windowless `TabSpan.Probe serve`, which runs the same parts ([below](#trying-it-without-a-window-tabspanprobe-serve)).
 
 The PC window is in Japanese only. The device app shows English or Japanese depending on the device language. Labels below are given as they appear on screen, with a translation where needed.
 
@@ -136,7 +136,7 @@ The PC window is in Japanese only. The device app shows English or Japanese depe
    ```
 
    This produces `pc\src\TabSpan.App\bin\Release\net10.0-windows10.0.22621.0\win-x64\TabSpan.App.exe`.
-2. Download `TabSpan-v0.1.0-android.apk` from the [v0.1.0 release](https://github.com/takosasi-dev/tab-span/releases/tag/v0.1.0) and install it on the device (`adb install TabSpan-v0.1.0-android.apk`). Use the same version on the PC and the device.
+2. Download `TabSpan-v0.2.0-android.apk` from the [v0.2.0 release](https://github.com/takosasi-dev/tab-span/releases/tag/v0.2.0) and install it on the device (`adb install -r TabSpan-v0.2.0-android.apk`). Use the same version on the PC and the device.
 
 > [!NOTE]
 > This APK is also **a temporary build signed with a debug key**. Once it moves to the real key you will need to uninstall it and install again.
@@ -153,9 +153,16 @@ The PC window is in Japanese only. The device app shows English or Japanese depe
 
 After that, with the device on USB and TabSpan running on the PC, opening TabSpan on the device is enough: it connects on its own.
 
+### Operating the PC by touch
+
+- Touching the device touches the PC at the matching point (up to 10 fingers). A finger that starts on the black bars outside the video is not sent.
+- On the PC, turn it on or off with the checkbox in the window ("端末のタッチで操作する") or with `Ctrl+Alt+T`. The device is told when it changes.
+- On the device's video screen, the Back action opens a menu (swipe in from the edge to show the navigation bar, then press Back). The menu has device-side touch, the overlay and disconnect. While the menu is open, no touches are sent to the PC.
+- Touches do not reach windows running as administrator (a Windows rule).
+
 ### Stopping
 
-- On the device, press Back or switch away from TabSpan to disconnect.
+- On the device, press disconnect in the menu (opened with Back), or switch away from TabSpan, to disconnect.
 - On the PC, "切断" (disconnect) ends the current connection. Closing the TabSpan window on the PC quits it (it tells the device it is quitting and removes the adb reverse first).
 
 ### Where data is kept
@@ -179,7 +186,7 @@ TabSpan.Probe.exe serve --pair
 TabSpan.Probe.exe serve
 ```
 
-With `--pair`, pressing "Add PC" on the device prints `PAIRING CODE <6 digits>`. Type the 6 digits shown on the device into standard input; it allows the device only if they match. You can also pass them up front with `--approve-code <6 digits>`. Other options: `--monitor <id>` (the monitor to mirror; a `DeviceName` printed by `monitors`), `--fps 30|60`, `--bitrate <Mbps>`, `--seconds <N>`, `--software` (software encoder only) and `--no-adb` (you set up adb reverse yourself). Press Ctrl+C or `q` to stop.
+With `--pair`, pressing "Add PC" on the device prints `PAIRING CODE <6 digits>`. Type the 6 digits shown on the device into standard input; it allows the device only if they match. You can also pass them up front with `--approve-code <6 digits>`. Other options: `--monitor <id>` (the monitor to mirror; a `DeviceName` printed by `monitors`), `--fps 30|60`, `--bitrate <Mbps>`, `--seconds <N>`, `--software` (software encoder only) `--no-adb` (you set up adb reverse yourself) and `--touch log|inject` (touch: `log` prints the contacts it would inject without injecting, `inject` really injects; `t` toggles either one; without it, touch is off). Press Ctrl+C or `q` to stop.
 
 ## Getting started
 

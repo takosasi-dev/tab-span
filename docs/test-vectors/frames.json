@@ -132,5 +132,11 @@
     "name": "length_0xffffffff",
     "headerHex": "11ffffffff",
     "tooLarge": true
+  },
+  {
+    "name": "touch_two_contacts",
+    "type": 32,
+    "payloadHex": "0200000000ffff010180001234",
+    "encodedHex": "200000000d0200000000ffff010180001234"
   }
 ]

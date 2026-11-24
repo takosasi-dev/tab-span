@@ -33,4 +33,10 @@
 
     <string name="video_waiting">映像を待っています…</string>
     <string name="video_paused">PC 側で画面が止まっています</string>
+
+    <string name="menu_touch">タッチ</string>
+    <string name="menu_pc_touch_off">PC 側でタッチが切られています</string>
+    <string name="menu_overlay">重ね表示</string>
+    <string name="menu_disconnect">切断</string>
+    <string name="menu_close">閉じる</string>
 </resources>

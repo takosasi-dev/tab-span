@@ -1,6 +1,8 @@
 // serve: 窓を出さずに、App と同じ部品(Link・Platform)で待ち受けて映す(契約 §6)。呼び出し元の E2E の確かめ用。
 // ペアリングは --pair で 120 秒受け付け、端末と同じ 6 桁が --approve-code(無ければ標準入力の 1 行)で渡された時だけ許可する。
 // 1 秒ごとに状態を 1 行出す。終わる時に Bye(shutdown) と reverse --remove。置き場は TABSPAN_DATA_DIR で切り替えられる。
+// タッチは既定で使わない。--touch log は注入せずに、注入するはずの接点を標準出力に出す(ファイルのログには座標を書かない。FR-28)。
+// --touch inject は本当に注入する(人が手で動かすとき)。どちらも標準入力の t で有効と無効を切り替え、端末へ Notice(touchEnabled) を送る。
 using System.Globalization;
 using System.Net.Sockets;
 using System.Text.Json;
@@ -12,9 +14,9 @@ namespace TabSpan.Probe;
 
 internal static class ServeCommand
 {
-    private const string Usage = "serve [--monitor \\\\.\\DISPLAYn] [--fps 30|60] [--bitrate <Mbps>] [--seconds <N>] [--pair] [--approve-code <6桁>] [--no-adb] [--software]";
+    private const string Usage = "serve [--monitor \\\\.\\DISPLAYn] [--fps 30|60] [--bitrate <Mbps>] [--seconds <N>] [--pair] [--approve-code <6桁>] [--no-adb] [--software] [--touch log|inject]";
 
-    private sealed record Options(string? Monitor, int? Fps, int? Bitrate, int Seconds, bool Pair, string? ApproveCode, bool NoAdb, bool Software);
+    private sealed record Options(string? Monitor, int? Fps, int? Bitrate, int Seconds, bool Pair, string? ApproveCode, bool NoAdb, bool Software, string? Touch);
 
     internal static int Run(string[] args)
     {
@@ -30,7 +32,7 @@ internal static class ServeCommand
 
     private static Options? Parse(string[] args)
     {
-        string? monitor = null, code = null;
+        string? monitor = null, code = null, touch = null;
         int? fps = null, bitrate = null;
         int seconds = 0;
         bool pair = false, noAdb = false, software = false;
@@ -48,11 +50,12 @@ internal static class ServeCommand
                 case "--approve-code": code = Next(); if (code is not { Length: 6 } || !code.All(char.IsAsciiDigit)) { return null; } break;
                 case "--no-adb": noAdb = true; break;
                 case "--software": software = true; break;
+                case "--touch": touch = Next(); if (touch is not ("log" or "inject")) { return null; } break;
                 default: return null;
             }
         }
 
-        return new Options(monitor, fps, bitrate, seconds, pair, code, noAdb, software);
+        return new Options(monitor, fps, bitrate, seconds, pair, code, noAdb, software, touch);
     }
 
     private static async Task<int> RunAsync(Options o)
@@ -103,6 +106,29 @@ internal static class ServeCommand
             Console.WriteLine($"  {(ReferenceEquals(mon, source) ? "*" : " ")} {mon.DeviceName}  {mon.Width}x{mon.Height}  ({mon.X},{mon.Y}){(mon.Primary ? "  主" : "")}{(mon.IsVirtual ? "  仮想" : "")}{(mon.Attached ? "" : "  外れている")}");
         }
 
+        TouchThread? touch = null;
+        if (o.Touch is "inject")
+        {
+            Windows.Win32.PInvoke.SetProcessDpiAwarenessContext(Windows.Win32.UI.HiDpi.DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); // 座標を物理ピクセルで扱う(§9.8)
+            touch = new TouchThread(() =>
+            {
+                var injector = Win32TouchInjector.Create(out var error);
+                if (injector is null)
+                {
+                    Console.WriteLine($"タッチの注入を準備できない(InitializeTouchInjection のエラー {error})。タッチは使いません");
+                }
+
+                return injector;
+            }, settings.TouchEnabled, settings.TouchRefreshMs, clock, log.Write);
+        }
+        else if (o.Touch is "log")
+        {
+            touch = new TouchThread(() => new CallbackTouchInjector(cs => Console.WriteLine("[touch] " + string.Join("  ", cs.Select(c => $"{c.Slot}:{c.Change}({c.X},{c.Y})")))),
+                settings.TouchEnabled, settings.TouchRefreshMs, clock, log.Write);
+        }
+
+        using var touchLifetime = touch;
+        Console.WriteLine(touch is null ? "タッチ: 使わない" : $"タッチ: {(o.Touch == "log" ? "注入せずに出す" : "注入する")}(今は{(touch.Enabled ? "有効" : "無効")}。t で切り替え)");
         Console.WriteLine(source is null ? "映す画面: 未選択(つないだ端末には Notice(paused) を送って待つ)" : $"映す画面: {source.DeviceName}");
 
         using var quit = new CancellationTokenSource();
@@ -115,6 +141,16 @@ internal static class ServeCommand
         MirrorStreamer? streamer = null;
         LinkSession? current = null;
         var sessionStarted = 0L;
+        if (touch is not null)
+        {
+            touch.AutoDisabled += () =>
+            {
+                if (current is { } live)
+                {
+                    _ = SendTouchNoticeAsync(live, false);
+                }
+            };
+        }
 
         async Task OnSession(LinkSession session, CancellationToken ct)
         {
@@ -131,7 +167,8 @@ internal static class ServeCommand
                 source.IsVirtual, streamOptions, clock, log.Write, () => session.Latency.OffsetUs);
             (streamer, current) = (s, session);
             Interlocked.Exchange(ref sessionStarted, Environment.TickCount64);
-            var pump = PumpAsync(session, s, ct);
+            touch?.Begin(new ScreenRect(source.X, source.Y, source.Width, source.Height));
+            var pump = PumpAsync(session, s, touch, ct);
             try
             {
                 await s.RunAsync(ct).ConfigureAwait(false);
@@ -150,11 +187,12 @@ internal static class ServeCommand
             finally
             {
                 (streamer, current) = (null, null);
+                touch?.End(); // 押したままの接点を取り消す(INV-7)
                 await pump.ConfigureAwait(false);
             }
         }
 
-        var server = new LinkServer(new LinkOptions { Port = settings.Port, AppVersion = typeof(ServeCommand).Assembly.GetName().Version?.ToString(3) ?? "0.0.0" },
+        var server = new LinkServer(new LinkOptions { Port = settings.Port, AppVersion = typeof(ServeCommand).Assembly.GetName().Version?.ToString(3) ?? "0.0.0", TouchEnabled = () => touch?.Enabled ?? false },
             identity, registry, Save, new AuthThrottle(clock), clock, log.Write, OnSession);
         try
         {
@@ -180,6 +218,15 @@ internal static class ServeCommand
                 {
                     quit.Cancel();
                     return;
+                }
+                else if (line.Trim() == "t" && touch is not null)
+                {
+                    touch.SetEnabled(!touch.Enabled);
+                    Console.WriteLine($"タッチを{(touch.Enabled ? "有効" : "無効")}にしました");
+                    if (current is { } live)
+                    {
+                        _ = SendTouchNoticeAsync(live, touch.Enabled);
+                    }
                 }
             }
         });
@@ -249,8 +296,9 @@ internal static class ServeCommand
                     var elapsed = (Environment.TickCount64 - Interlocked.Read(ref sessionStarted)) / 1000;
                     var rtt = session.Latency.RttUs is { } r ? $"{r / 1000.0:F1} ms" : "—";
                     var total = t.Total.Count > 0 ? $" 合計 p50 {t.Total.P50Us / 1000.0:F1} ms p95 {t.Total.P95Us / 1000.0:F1} ms" : "";
+                    var touchLatency = touch?.TakeLatency() is { Count: > 0 } tl ? $" タッチ {tl.Count} 回 p95 {tl.P95Us / 1000.0:F1} ms" : "";
                     Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
-                        $"[{elapsed}s] 送信 {t.Frames} 枚(キー {t.KeyFrames}) {t.Bytes / 1024} kB/s 往復 {rtt} 端末 復号 {t.DeviceDecoded} 捨て {t.DeviceDropped} PC 捨て累計 {t.BacklogDropped} 取込→送信 p50 {t.CaptureToSend.P50Us / 1000.0:F1} ms{total} {t.Width}x{t.Height}@{t.Fps} {t.Encoder}({(t.HardwareEncoder ? "ハード" : "ソフト")})"));
+                        $"[{elapsed}s] 送信 {t.Frames} 枚(キー {t.KeyFrames}) {t.Bytes / 1024} kB/s 往復 {rtt} 端末 復号 {t.DeviceDecoded} 捨て {t.DeviceDropped} PC 捨て累計 {t.BacklogDropped} 取込→送信 p50 {t.CaptureToSend.P50Us / 1000.0:F1} ms{total} {t.Width}x{t.Height}@{t.Fps} {t.Encoder}({(t.HardwareEncoder ? "ハード" : "ソフト")}){touchLatency}"));
                     if (o.Seconds > 0 && elapsed >= o.Seconds)
                     {
                         Console.WriteLine($"{o.Seconds} 秒流したので終わります");
@@ -283,17 +331,30 @@ internal static class ServeCommand
         return 0;
     }
 
-    private static async Task PumpAsync(LinkSession session, MirrorStreamer streamer, CancellationToken ct)
+    private static async Task PumpAsync(LinkSession session, MirrorStreamer streamer, TouchThread? touch, CancellationToken ct)
     {
         try
         {
             await foreach (var f in session.Incoming.ReadAllAsync(ct).ConfigureAwait(false))
             {
                 streamer.OnFrame(f);
+                touch?.OnFrame(f);
             }
         }
         catch (OperationCanceledException)
         {
+        }
+    }
+
+    private static async Task SendTouchNoticeAsync(LinkSession session, bool enabled)
+    {
+        try
+        {
+            await session.SendAsync(MessageType.Notice, Messages.ToJson(new NoticeMsg("touchEnabled", JsonSerializer.SerializeToElement(enabled))), session.Closing).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is IOException or OperationCanceledException or ObjectDisposedException)
+        {
+            // 切れた
         }
     }
 

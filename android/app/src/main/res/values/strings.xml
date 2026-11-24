@@ -35,5 +35,11 @@
 
     <string name="video_waiting">Waiting for video…</string>
     <string name="video_paused">The screen on the PC is paused.</string>
+
+    <string name="menu_touch">Touch</string>
+    <string name="menu_pc_touch_off">Touch is turned off on the PC.</string>
+    <string name="menu_overlay">Overlay</string>
+    <string name="menu_disconnect">Disconnect</string>
+    <string name="menu_close">Close</string>
     <string name="overlay_format" translatable="false">%1$d fps  %2$d ms  drop %3$d  %4$dx%5$d</string>
 </resources>

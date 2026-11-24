@@ -53,7 +53,8 @@ public class VectorTests
             MessageType.VideoFrame => VideoAgain(payload),
             MessageType.Ping => Messages.Ping(Messages.ParsePing(payload)),
             MessageType.Pong => PongAgain(payload),
-            _ => null, // RequestKeyframe(空)、Touch(Phase 3)、知らない type は枠だけ
+            MessageType.Touch => TouchCodec.Encode(TouchCodec.Parse(payload)),
+            _ => null, // RequestKeyframe(空)、知らない type は枠だけ
         };
         if (again is not null)
         {

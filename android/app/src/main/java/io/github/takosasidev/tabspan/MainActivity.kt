@@ -6,11 +6,12 @@ import android.os.Bundle
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.WindowManager
+import androidx.annotation.StringRes
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -26,14 +27,18 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -57,7 +62,10 @@ class MainActivity : ComponentActivity() {
             MaterialTheme(colorScheme = COLORS) {
                 val ui = connector.ui
                 SystemBars(ui.screen == Screen.VIDEO)
-                BackHandler(enabled = ui.screen != Screen.HOME) { connector.cancel() }
+                // 映像の画面では戻る操作でメニューを出し入れする(ナビゲーションバーは引き出して使う)
+                BackHandler(enabled = ui.screen != Screen.HOME) {
+                    if (ui.screen == Screen.VIDEO) connector.setMenu(!ui.menuOpen) else connector.cancel()
+                }
                 when (ui.screen) {
                     Screen.HOME -> HomeScreen(ui, connector)
                     Screen.PAIRING -> PairingScreen(ui, connector)
@@ -156,6 +164,7 @@ private fun PairingScreen(ui: UiState, connector: Connector) {
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun VideoScreen(ui: UiState, connector: Connector) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
@@ -195,7 +204,38 @@ private fun VideoScreen(ui: UiState, connector: Connector) {
                 modifier = Modifier.padding(8.dp).background(Color(0x99000000)).padding(horizontal = 6.dp, vertical = 2.dp),
             )
         }
-        // タップで重ね表示を出し入れする(SurfaceView の上に重ねた透明な面で受ける)
-        Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { connector.toggleOverlay() } })
+        // タッチは PC へ送る(SurfaceView の上に重ねた透明な面で受ける。座標は FitRect と同じ面)
+        val currentRect by rememberUpdatedState(rect)
+        if (ui.menuOpen) {
+            VideoMenu(ui, connector)
+        } else {
+            Box(Modifier.fillMaxSize().pointerInteropFilter { connector.onTouch(it, currentRect); true })
+        }
+    }
+}
+
+@Composable
+private fun VideoMenu(ui: UiState, connector: Connector) {
+    Box(Modifier.fillMaxSize().background(Color(0x99000000)), contentAlignment = Alignment.Center) {
+        Column(
+            Modifier.widthIn(min = 280.dp, max = 400.dp).background(Color(0xFF1E1E1E), RoundedCornerShape(12.dp)).padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            MenuSwitch(R.string.menu_touch, ui.deviceTouch) { connector.setDeviceTouch(it) }
+            if (!ui.pcTouch) Text(stringResource(R.string.menu_pc_touch_off), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+            MenuSwitch(R.string.menu_overlay, ui.showOverlay) { connector.toggleOverlay() }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(onClick = { connector.cancel() }) { Text(stringResource(R.string.menu_disconnect)) }
+                Button(onClick = { connector.setMenu(false) }) { Text(stringResource(R.string.menu_close)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MenuSwitch(@StringRes label: Int, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(stringResource(label), modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface)
+        Switch(checked = checked, onCheckedChange = onChange)
     }
 }

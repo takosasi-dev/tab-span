@@ -1,5 +1,5 @@
 // 仮のメインの画面(画面設計書 P2): 状態、つないでいる端末、送っている大きさと fps、映す画面の選択、「端末を追加」。
-// 1 秒ごとと、部品の状態が変わった時に描き直す。文言は Strings.ja.resx。
+// 1 秒ごとと、部品の状態が変わった時に描き直す。文言は Strings.resx。タッチの切り替えのホットキー(FR-23)もここで持つ。
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -14,6 +14,8 @@ public partial class MainWindow : Window
     private IReadOnlyList<MonitorInfo>? _shownMonitors;
     private StreamSecond? _lastSecond;
     private bool _updatingList;
+    private HotKey? _hotKey;
+    private bool _hotKeyFailed;
 
     public MainWindow(AppHost host)
     {
@@ -26,6 +28,17 @@ public partial class MainWindow : Window
             Refresh();
         };
         _timer.Start();
+        SourceInitialized += (_, _) =>
+        {
+            _hotKey = HotKey.TryRegister(_host.Settings.TouchHotkey, () => _host.SetTouchEnabled(!_host.TouchEnabled));
+            _hotKeyFailed = _hotKey is null;
+            if (_hotKeyFailed)
+            {
+                _host.Log.Write($"ホットキー {_host.Settings.TouchHotkey} を登録できない");
+            }
+
+            Refresh();
+        };
         Refresh();
     }
 
@@ -77,6 +90,15 @@ public partial class MainWindow : Window
         BannerText.Text = banner ?? "";
         Banner.Visibility = banner is null ? Visibility.Collapsed : Visibility.Visible;
 
+        TouchCheck.Content = _hotKey is not null ? Strings.Format("Touch_Check", _host.Settings.TouchHotkey) : Strings.Get("Touch_CheckNoHotkey");
+        TouchCheck.IsChecked = _host.TouchEnabled;
+        TouchCheck.IsEnabled = _host.TouchAvailable;
+        var touchNote = !_host.TouchAvailable ? Strings.Get("Touch_Unavailable")
+            : _hotKeyFailed ? Strings.Format("Touch_HotkeyFailed", _host.Settings.TouchHotkey)
+            : null;
+        TouchNote.Text = touchNote ?? "";
+        TouchNote.Visibility = touchNote is null ? Visibility.Collapsed : Visibility.Visible;
+
         FooterText.Text = Strings.Format("Footer", Strings.Get(_host.Settings.UsbEnabled && !_host.AdbMissing ? "Footer_UsbOn" : "Footer_UsbOff"), _host.Settings.Port);
     }
 
@@ -106,9 +128,12 @@ public partial class MainWindow : Window
 
     private void OnDisconnect(object sender, RoutedEventArgs e) => _ = _host.DisconnectAsync();
 
+    private void OnTouchClick(object sender, RoutedEventArgs e) => _host.SetTouchEnabled(TouchCheck.IsChecked == true);
+
     protected override void OnClosed(EventArgs e)
     {
         _timer.Stop();
+        _hotKey?.Dispose();
         base.OnClosed(e);
     }
 }

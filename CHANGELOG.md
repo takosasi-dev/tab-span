@@ -4,6 +4,29 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-24
+
+端末のタッチで PC を操作できるようになった(Phase 3)。dtab d-01J で、触った位置が PC の画面の座標に正しく直って届くこと(画面の真ん中 → 2 枚目のモニターの真ん中)、黒い余白で触り始めた指を送らないこと、長押しの間に更新を送り直すこと、PC と端末のどちらで切っても送らないことを、注入をしない形(`serve --touch log`)で確かめた。
+
+### Added
+
+- PC: タッチの注入(§9.8)。接点の表(10 点まで)、映す画面の物理ピクセルへの変換、押したままの接点の送り直し(`touchRefreshMs`)、端末から 2 秒枠が来なければ取り消し、セッションの終わりと切り替えのときの取り消し、注入の失敗が 10 秒で 10 回続いたら自分で切る。注入は専用のスレッド 1 本から行う。
+- PC: `TabSpan.App` に「端末のタッチで操作する」のチェックと、切り替えのホットキー(`Ctrl+Alt+T`、設定の `touchHotkey`)。切り替えは保存し、端末に `Notice(touchEnabled)` で知らせる。
+- PC: `TabSpan.Probe serve --touch log|inject`。
+- Android: 映像の画面のタッチを PC へ送る(10 本まで。映像の外で触り始めた指は送らない)。戻る操作で開くメニュー(端末側のタッチ・重ね表示・切断)。
+- テストベクタ `frames.json` に Touch の枠を足した(PC と Android の両方が読む)。
+
+### Changed
+
+- Android: 映像の画面のタップで重ね表示を出し入れするのをやめた(タップは PC へ送る)。重ね表示はメニューから切り替える。
+- Android: 戻る操作で切断していたのを、メニューを開くようにした。切断はメニューから。
+
+### Known issues
+
+- 2 本以上の指と、PC で実際に注入して操作することは、まだ確かめていない(adb では 1 本の指しか起こせないため)。
+- 端末側のタッチの切り替えは保存しない(アプリを開き直すとオン)。
+- 0.1.0 の Known issues のうち、App の画面の確かめ・タッチ以外の物(ハードウェアのエンコーダー、LAN、拡張、常駐、署名の鍵など)は残っている。
+
 ### Fixed
 
 - PC の `TabSpan.App` が起動の直後に落ちていた(「リソース 'app.xaml' を検索できません」)。文言の既定の言語の置き場を別の DLL(Satellite)にしていたため、WPF が画面の定義まで別の DLL に探しに行っていた。文言を本体の DLL に入れるようにした。
@@ -54,7 +77,8 @@ PC の 1 枚のモニターを、USB で端末に複製して映せるように�
 - Phase 0: PC 側の測定用ツール `TabSpan.Probe` を追加(monitors / capture / encoders / encode / detach / attach / touch / adb / clock / tls)。
 - Phase 0: Android 側の測定用アプリ(probe)を追加。`video/avc` のデコーダーの一覧と候補の大きさごとの可否・configure の試し、画面の大きさ、PC の `tls` への TLS 1.2 の接続テスト(証明書の SHA-256 の指紋を表示)。結果は画面と logcat(タグ `TabSpanProbe`)に出す。adb の `am start --es action tls --ei port <N>` でも TLS のテストを始められる。
 
-[Unreleased]: https://github.com/takosasi-dev/tab-span/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/takosasi-dev/tab-span/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/takosasi-dev/tab-span/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/takosasi-dev/tab-span/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/takosasi-dev/tab-span/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/takosasi-dev/tab-span/releases/tag/v0.0.2

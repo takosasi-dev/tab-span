@@ -64,3 +64,9 @@ CoTaskMemFree
 MFCreateDXGIDeviceManager
 IMFDXGIDeviceManager
 ID3D10Multithread
+InitializeTouchInjection
+InjectTouchInput
+POINTER_TOUCH_INFO
+TOUCH_MASK_CONTACTAREA
+TOUCH_MASK_ORIENTATION
+TOUCH_MASK_PRESSURE

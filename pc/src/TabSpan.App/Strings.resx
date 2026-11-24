@@ -16,6 +16,11 @@
   <data name="Main_State" xml:space="preserve"><value>状態:</value></data>
   <data name="Main_Device" xml:space="preserve"><value>端末:</value></data>
   <data name="Main_Video" xml:space="preserve"><value>映像:</value></data>
+  <data name="Main_Touch" xml:space="preserve"><value>タッチ:</value></data>
+  <data name="Touch_Check" xml:space="preserve"><value>端末のタッチで操作する({0} で切り替え)</value></data>
+  <data name="Touch_CheckNoHotkey" xml:space="preserve"><value>端末のタッチで操作する</value></data>
+  <data name="Touch_Unavailable" xml:space="preserve"><value>この PC ではタッチの注入を準備できませんでした</value></data>
+  <data name="Touch_HotkeyFailed" xml:space="preserve"><value>ホットキー {0} を登録できませんでした(ほかのアプリが使っているかもしれません)</value></data>
   <data name="Main_Disconnect" xml:space="preserve"><value>切断</value></data>
   <data name="Main_Source" xml:space="preserve"><value>映す画面</value></data>
   <data name="Main_AddDevice" xml:space="preserve"><value>端末を追加</value></data>

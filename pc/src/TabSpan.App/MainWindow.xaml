@@ -24,6 +24,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
@@ -38,8 +39,14 @@
             <TextBlock Grid.Row="2" Text="{local:Str Main_Video}" Margin="0,0,12,12" />
             <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" x:Name="VideoText" Margin="0,0,0,12" />
 
-            <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Text="{local:Str Main_Source}" FontWeight="SemiBold" Margin="0,0,0,4" />
-            <ListBox Grid.Row="4" Grid.ColumnSpan="3" x:Name="MonitorList" SelectionChanged="OnSourceSelected">
+            <TextBlock Grid.Row="3" Text="{local:Str Main_Touch}" Margin="0,0,12,12" />
+            <StackPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,12">
+                <CheckBox x:Name="TouchCheck" Click="OnTouchClick" />
+                <TextBlock x:Name="TouchNote" TextWrapping="Wrap" Margin="0,2,0,0" Visibility="Collapsed" />
+            </StackPanel>
+
+            <TextBlock Grid.Row="4" Grid.ColumnSpan="3" Text="{local:Str Main_Source}" FontWeight="SemiBold" Margin="0,0,0,4" />
+            <ListBox Grid.Row="5" Grid.ColumnSpan="3" x:Name="MonitorList" SelectionChanged="OnSourceSelected">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
@@ -51,7 +58,7 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <StackPanel Grid.Row="5" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="0,8,0,0">
+            <StackPanel Grid.Row="6" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="0,8,0,0">
                 <Button Content="{local:Str Main_AddDevice}" Padding="12,4" Click="OnAddDevice" x:Name="AddDeviceButton" />
                 <Button Content="{local:Str Main_Refresh}" Padding="12,4" Margin="8,0,0,0" Click="OnRefresh" />
                 <TextBlock x:Name="HintText" Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />

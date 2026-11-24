@@ -16,8 +16,8 @@ public sealed record LinkOptions
     public string PcName { get; init; } = Environment.MachineName;
     public string AppVersion { get; init; } = "0.1.0";
 
-    /// <summary>HelloAck の touchEnabled。タッチの注入は Phase 3 なので、今は偽を送る。</summary>
-    public bool TouchEnabled { get; init; }
+    /// <summary>HelloAck の touchEnabled(送る時の値を読む)。</summary>
+    public Func<bool> TouchEnabled { get; init; } = () => false;
     public TimeSpan PingInterval { get; init; } = TimeSpan.FromSeconds(1);
     public TimeSpan PongTimeout { get; init; } = TimeSpan.FromSeconds(5);
     public TimeSpan HandshakeTimeout { get; init; } = TimeSpan.FromSeconds(10);
@@ -376,7 +376,7 @@ public sealed class LinkServer : IAsyncDisposable
     }
 
     private byte[] Ack(bool ok, string? reason) =>
-        Messages.ToJson(new HelloAckMsg(ok, reason, _identity.PcInstanceId, _options.PcName, _options.AppVersion, _options.TouchEnabled));
+        Messages.ToJson(new HelloAckMsg(ok, reason, _identity.PcInstanceId, _options.PcName, _options.AppVersion, _options.TouchEnabled()));
 
     private static byte[]? DecodeBase64(string? text)
     {

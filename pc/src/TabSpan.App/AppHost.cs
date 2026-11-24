@@ -1,5 +1,6 @@
 // アプリの部品の配線: 設定・ログ・identity・台帳を読み、待ち受け(Link)と adb の見回りを始め、つながった端末へ選んだモニターを映す(Platform)。
-// 画面からは状態を読み、映す画面の選択・端末の追加・切断を頼む。Changed は UI 以外のスレッドから来る。
+// 画面からは状態を読み、映す画面の選択・端末の追加・切断・タッチの切り替えを頼む。Changed は UI 以外のスレッドから来る。
+// タッチ(§9.8)は注入のスレッド 1 本(TouchThread)に集め、端末からの枠を全部そこへも回す。
 using System.Net.Sockets;
 using System.Text.Json;
 using TabSpan.Core;
@@ -18,6 +19,7 @@ public sealed class AppHost : IAsyncDisposable
     private readonly Lock _saveLock = new();
     private readonly CancellationTokenSource _stop = new();
     private readonly LinkServer _server;
+    private readonly TouchThread _touch;
     private Task _adbLoop = Task.CompletedTask;
     private CancellationTokenSource? _restart;
 
@@ -42,7 +44,18 @@ public sealed class AppHost : IAsyncDisposable
         }
 
         RefreshMonitors();
-        _server = new LinkServer(new LinkOptions { Port = Settings.Port, AppVersion = typeof(AppHost).Assembly.GetName().Version?.ToString(3) ?? "0.0.0" },
+        _touch = new TouchThread(() =>
+        {
+            var injector = Win32TouchInjector.Create(out var error);
+            if (injector is null)
+            {
+                Log.Write($"タッチの注入を準備できない(InitializeTouchInjection のエラー {error})。タッチを使わない");
+            }
+
+            return injector;
+        }, Settings.TouchEnabled, Settings.TouchRefreshMs, _clock, Log.Write);
+        _touch.AutoDisabled += () => SetTouchEnabled(false);
+        _server = new LinkServer(new LinkOptions { Port = Settings.Port, AppVersion = typeof(AppHost).Assembly.GetName().Version?.ToString(3) ?? "0.0.0", TouchEnabled = () => _touch.Enabled },
             _identity, _registry, SaveDevices, new AuthThrottle(_clock), _clock, Log.Write, OnSessionAsync);
         _server.Changed += () => Changed?.Invoke();
         try
@@ -83,6 +96,12 @@ public sealed class AppHost : IAsyncDisposable
 
     public int RegisteredDevices => _registry.Entries.Count;
 
+    /// <summary>端末のタッチを注入するか(FR-22)。</summary>
+    public bool TouchEnabled => _touch.Enabled;
+
+    /// <summary>注入の準備ができた(§9.8。偽なら画面にその旨を出す)。</summary>
+    public bool TouchAvailable => _touch.Available;
+
     /// <summary>状態が変わった(UI 以外のスレッドから来る)。</summary>
     public event Action? Changed;
 
@@ -105,6 +124,21 @@ public sealed class AppHost : IAsyncDisposable
         catch (ObjectDisposedException)
         {
             // ちょうど切り替わったところ。次の回は新しい選択で始まる
+        }
+
+        Changed?.Invoke();
+    }
+
+    /// <summary>タッチを切り替えて保存し、つないでいる端末へ Notice(touchEnabled) を送る(FR-22・FR-23)。</summary>
+    public void SetTouchEnabled(bool enabled)
+    {
+        Settings = Settings with { TouchEnabled = enabled };
+        _settingsStore.Save(Settings);
+        _touch.SetEnabled(enabled);
+        Log.Write($"タッチを{(enabled ? "有効" : "無効")}にした");
+        if (Session is { } session)
+        {
+            _ = SendTouchNoticeAsync(session, _touch.Enabled);
         }
 
         Changed?.Invoke();
@@ -134,11 +168,27 @@ public sealed class AppHost : IAsyncDisposable
 
     private async Task OnSessionAsync(LinkSession session, CancellationToken ct)
     {
+        _touch.Begin(RectOf(Source));
+        try
+        {
+            await StreamAsync(session, ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            _touch.End(); // 押したままの接点を取り消す(INV-7)
+        }
+    }
+
+    private static ScreenRect? RectOf(MonitorInfo? m) => m is null ? null : new ScreenRect(m.X, m.Y, m.Width, m.Height);
+
+    private async Task StreamAsync(LinkSession session, CancellationToken ct)
+    {
         while (!ct.IsCancellationRequested)
         {
             using var restart = CancellationTokenSource.CreateLinkedTokenSource(ct);
             _restart = restart;
             var source = Source;
+            _touch.SetRect(RectOf(source));
             if (source is null)
             {
                 await SendPausedAsync(session, ct).ConfigureAwait(false);
@@ -154,7 +204,7 @@ public sealed class AppHost : IAsyncDisposable
                 _clock, Log.Write, () => session.Latency.OffsetUs);
             Streamer = streamer;
             Changed?.Invoke();
-            var pump = PumpAsync(session, streamer, restart.Token);
+            var pump = PumpAsync(session, streamer, _touch, restart.Token);
             try
             {
                 await streamer.RunAsync(restart.Token).ConfigureAwait(false);
@@ -193,17 +243,30 @@ public sealed class AppHost : IAsyncDisposable
         }
     }
 
-    private static async Task PumpAsync(LinkSession session, MirrorStreamer streamer, CancellationToken ct)
+    private static async Task PumpAsync(LinkSession session, MirrorStreamer streamer, TouchThread touch, CancellationToken ct)
     {
         try
         {
             await foreach (var f in session.Incoming.ReadAllAsync(ct).ConfigureAwait(false))
             {
                 streamer.OnFrame(f);
+                touch.OnFrame(f);
             }
         }
         catch (OperationCanceledException)
         {
+        }
+    }
+
+    private static async Task SendTouchNoticeAsync(LinkSession session, bool enabled)
+    {
+        try
+        {
+            await session.SendAsync(MessageType.Notice, Messages.ToJson(new NoticeMsg("touchEnabled", JsonSerializer.SerializeToElement(enabled))), session.Closing).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or OperationCanceledException or ObjectDisposedException)
+        {
+            // 切れた
         }
     }
 
@@ -223,6 +286,7 @@ public sealed class AppHost : IAsyncDisposable
         await _stop.CancelAsync().ConfigureAwait(false);
         await _server.DisposeAsync().ConfigureAwait(false); // Bye(shutdown)
         await _adbLoop.ConfigureAwait(false);
+        _touch.Dispose();
         if (Watcher is { } w)
         {
             using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(15));
