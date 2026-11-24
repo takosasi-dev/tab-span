@@ -11,9 +11,10 @@ internal sealed record H264Encoder(IMFActivate Activate, string Name, MFT_ENUM_F
 {
     internal bool Hardware => Flags.HasFlag(MFT_ENUM_FLAG.MFT_ENUM_FLAG_HARDWARE);
 
-    internal bool Async => Flags.HasFlag(MFT_ENUM_FLAG.MFT_ENUM_FLAG_ASYNCMFT);
-
-    internal string Kind => $"{(Hardware ? "ハードウェア" : "ソフトウェア")}、{(Async ? "非同期の MFT" : "同期の MFT")}";
+    // 一覧の印に非同期の印が無くても、ハードウェアの MFT は非同期のことがある(実測: 印は HARDWARE だけで、MF_TRANSFORM_ASYNC は 1 だった)。
+    // 同期か非同期かは、実体を作った後の MF_TRANSFORM_ASYNC で決める。ここでは印に書いてあることだけを言う。
+    internal string Kind => (Hardware ? "ハードウェア" : "ソフトウェア")
+        + (Flags.HasFlag(MFT_ENUM_FLAG.MFT_ENUM_FLAG_ASYNCMFT) ? "、一覧の印は非同期" : Hardware ? "、一覧の印に同期・非同期の別なし" : "、一覧の印は同期");
 }
 
 internal static class Mf
