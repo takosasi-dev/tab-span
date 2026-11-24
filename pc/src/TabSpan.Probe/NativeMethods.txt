@@ -89,3 +89,11 @@ CODECAPI_AVEncH264CABACEnable
 CODECAPI_AVEncNumWorkerThreads
 CODECAPI_AVEncVideoContentType
 CoTaskMemFree
+MFCreateDXGIDeviceManager
+IMFDXGIDeviceManager
+MFCreateDXGISurfaceBuffer
+IMF2DBuffer
+ID3D10Multithread
+CreateDXGIFactory1
+IDXGIFactory1
+MF_SA_D3D11_AWARE

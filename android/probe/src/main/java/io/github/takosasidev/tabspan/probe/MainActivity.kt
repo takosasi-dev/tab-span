@@ -1,4 +1,4 @@
-// probe の画面と入口。起動で調べ物を走らせ、「TLS のテスト」ボタンと adb の intent(--es action tls --ei port N)で TLS を試す。
+// probe の画面と入口。起動で調べ物を走らせ、ボタンと adb の intent(--es action tls --ei port N / --es action decode-test)で TLS と復号を試す。
 // 仕事は 1 本の裏のスレッドに順に並べ、出た行は画面と logcat(TabSpanProbe)の両方に出す。並んだ仕事が全部はけたら「--- 終わり ---」。
 package io.github.takosasidev.tabspan.probe
 
@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.util.Log
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.WindowManager
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.Button
 import android.widget.EditText
@@ -31,6 +32,8 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 復号のテストは数分かかる。途中で画面が消えて省電力に入ると値が揺れるので、開いている間は消さない
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         val pad = (12 * resources.displayMetrics.density).toInt()
         portInput = EditText(this).apply {
             inputType = InputType.TYPE_CLASS_NUMBER
@@ -41,10 +44,15 @@ class MainActivity : Activity() {
             text = "TLS のテスト"
             setOnClickListener { onTlsButton() }
         }
+        val decodeButton = Button(this).apply {
+            text = "復号のテスト"
+            setOnClickListener { enqueueDecodeTest() }
+        }
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             addView(portInput, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
             addView(button, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT))
+            addView(decodeButton, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT))
         }
         output = TextView(this).apply {
             setTextIsSelectable(true)
@@ -80,7 +88,11 @@ class MainActivity : Activity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        if (intent?.getStringExtra("action") != "tls") return
+        when (intent?.getStringExtra("action")) {
+            "tls" -> {}
+            "decode-test" -> return enqueueDecodeTest()
+            else -> return
+        }
         val port = intent.getIntExtra("port", ProbeText.DEFAULT_PORT)
         if (!ProbeText.isValidPort(port)) {
             enqueue { it("intent の port が範囲外です: $port (1〜65535)") } // 終わりの行も出すため並べる
@@ -98,6 +110,11 @@ class MainActivity : Activity() {
             return
         }
         enqueue { TlsTest.run(port, it) }
+    }
+
+    private fun enqueueDecodeTest() {
+        val dir = getExternalFilesDir(null) // null のことがある(外部の記憶域が使えないとき)。DecodeTest がそう出す
+        enqueue { DecodeTest.run(dir, it) }
     }
 
     private fun enqueue(job: ((String) -> Unit) -> Unit) {

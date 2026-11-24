@@ -70,6 +70,12 @@ TLS test:
 3. Tap "TLS のテスト" in the app, or from adb: `adb shell am start -n io.github.takosasidev.tabspan.probe/.MainActivity --es action tls --ei port 47815`.
 4. Compare the certificate fingerprint (SHA-256) shown on the PC and on the device.
 
+Decode test (since v0.0.2):
+
+1. Put raw H.264 streams (Annex B, with an AUD at the start of each access unit) named `tabspan_<width>x<height>_<fps>.h264` in `/sdcard/Android/data/io.github.takosasidev.tabspan.probe/files/`. For example: `ffmpeg -f lavfi -i testsrc2=size=1280x800:rate=30 -t 5 -c:v libx264 -profile:v main -bf 0 -g 60 -b:v 8M -x264-params aud=1 -f h264 tabspan_1280x800_30.h264`
+2. Tap "復号のテスト" (decode test) in the app, or from adb: `adb shell am start -n io.github.takosasidev.tabspan.probe/.MainActivity --es action decode-test`.
+3. For each decoder it shows the fps when fed as fast as possible and the delay (feed to output) when fed in real time, then a summary table.
+
 Notes:
 
 - The only permission is INTERNET, and it only connects to 127.0.0.1.
@@ -77,7 +83,7 @@ Notes:
 
 ## Download
 
-The v0.0.1 pre-release on [Releases](https://github.com/takosasi-dev/tab-span/releases) has the Android probe APK only.
+The latest pre-release on [Releases](https://github.com/takosasi-dev/tab-span/releases) has the Android probe APK only.
 
 - The APK is **a temporary build signed with a debug key**. Once it moves to the real key you will need to uninstall it and install again.
 - The PC exe is not distributed, because the redistribution terms of the Windows SDK DLLs that ship next to it have not been checked yet. Build it from source as above.

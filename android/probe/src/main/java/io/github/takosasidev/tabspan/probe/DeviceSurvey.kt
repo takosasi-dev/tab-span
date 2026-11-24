@@ -30,8 +30,7 @@ object DeviceSurvey {
         emit("densityDpi: ${metrics.densityDpi}")
         emit("xdpi/ydpi: ${metrics.xdpi}/${metrics.ydpi}")
 
-        val decoders = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos
-            .filter { info -> !info.isEncoder && info.supportedTypes.any { it.equals(AVC, ignoreCase = true) } }
+        val decoders = avcDecoders()
         emit("--- $AVC のデコーダー: ${decoders.size} 個 ---")
         decoders.forEachIndexed { index, info -> describe(index, info, emit) }
 
@@ -44,6 +43,10 @@ object DeviceSurvey {
             }
         }
     }
+
+    /** video/avc のデコーダー(MediaCodecList の順)。 */
+    fun avcDecoders(): List<MediaCodecInfo> = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos
+        .filter { info -> !info.isEncoder && info.supportedTypes.any { it.equals(AVC, ignoreCase = true) } }
 
     private fun describe(index: Int, info: MediaCodecInfo, emit: (String) -> Unit) {
         val name = info.name
@@ -86,7 +89,7 @@ object DeviceSurvey {
         return result
     }
 
-    private fun describe(e: Exception): String {
+    fun describe(e: Exception): String {
         val base = "${e.javaClass.name}: ${e.message}"
         // CodecException は message が空のことが多いので、diagnosticInfo とエラーの番号も添える
         return if (e is MediaCodec.CodecException) {

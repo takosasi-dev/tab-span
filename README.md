@@ -70,6 +70,12 @@ TLS のテストの手順:
 3. アプリの「TLS のテスト」を押す。adb からなら `adb shell am start -n io.github.takosasidev.tabspan.probe/.MainActivity --es action tls --ei port 47815`。
 4. PC と端末の両方に出る証明書の指紋(SHA-256)を見比べる。
 
+復号のテストの手順(v0.0.2 から):
+
+1. 試したい H.264 の映像(生の Annex B、各アクセス ユニットの先頭に AUD)を、`tabspan_<幅>x<高さ>_<fps>.h264` の名前で `/sdcard/Android/data/io.github.takosasidev.tabspan.probe/files/` に置く。例: `ffmpeg -f lavfi -i testsrc2=size=1280x800:rate=30 -t 5 -c:v libx264 -profile:v main -bf 0 -g 60 -b:v 8M -x264-params aud=1 -f h264 tabspan_1280x800_30.h264`
+2. アプリの「復号のテスト」を押す。adb からなら `adb shell am start -n io.github.takosasidev.tabspan.probe/.MainActivity --es action decode-test`。
+3. デコーダーごとに、できるだけ速く入れたときの fps と、実時間で入れたときの遅れ(入れてから出るまで)が出て、最後に表になります。
+
 注意:
 
 - 権限は INTERNET だけです。つなぐ先は 127.0.0.1 だけです。
@@ -77,7 +83,7 @@ TLS のテストの手順:
 
 ## ダウンロード
 
-[Releases](https://github.com/takosasi-dev/tab-span/releases) の v0.0.1(プレリリース)に、Android の probe の APK だけを置いています。
+[Releases](https://github.com/takosasi-dev/tab-span/releases) のいちばん新しいプレリリースに、Android の probe の APK だけを置いています。
 
 - APK は**デバッグ用の鍵で署名した仮の物**です。正式な鍵に変えた後は、いったん消して入れ直す必要があります。
 - PC 側の exe は配りません。隣に入る Windows SDK の DLL の再配布の条件を確かめ終えていないためです。上の手順でソースからビルドしてください。
