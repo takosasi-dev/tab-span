@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-24
+
+### Changed
+
+- 端末が PC に伝える「復号できる大きさ」に、デコーダーの申告に加えて、実際に configure が通った大きさを足すようにした。dtab d-01J は申告が実力より狭く(60 fps で 1280x800 まで)、60 fps を選ぶと 1280x720 に縮めて送っていたが、1920x1080 を縮めずに送るようになった。復号に失敗したときは、今までどおり PC が大きさを 1 段ずつ下げる。
+
 ## [0.1.0] - 2026-11-24
 
 PC の 1 枚のモニターを、USB で端末に複製して映せるようになった(Phase 1 と、Phase 2 のうち実在のモニターの複製まで)。dtab d-01J(Android 7.0)で、ペアリングから映像までを確かめた。1920x1080@30 で、PC で取り込んでから端末で復号されるまでの遅れの中央値は約 16 ms、捨てたフレームは 0(端末の画面に出るまでの時間は含まない)。
@@ -44,7 +50,8 @@ PC の 1 枚のモニターを、USB で端末に複製して映せるように�
 - Phase 0: PC 側の測定用ツール `TabSpan.Probe` を追加(monitors / capture / encoders / encode / detach / attach / touch / adb / clock / tls)。
 - Phase 0: Android 側の測定用アプリ(probe)を追加。`video/avc` のデコーダーの一覧と候補の大きさごとの可否・configure の試し、画面の大きさ、PC の `tls` への TLS 1.2 の接続テスト(証明書の SHA-256 の指紋を表示)。結果は画面と logcat(タグ `TabSpanProbe`)に出す。adb の `am start --es action tls --ei port <N>` でも TLS のテストを始められる。
 
-[Unreleased]: https://github.com/takosasi-dev/tab-span/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/takosasi-dev/tab-span/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/takosasi-dev/tab-span/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/takosasi-dev/tab-span/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/takosasi-dev/tab-span/releases/tag/v0.0.2
 [0.0.1]: https://github.com/takosasi-dev/tab-span/releases/tag/v0.0.1

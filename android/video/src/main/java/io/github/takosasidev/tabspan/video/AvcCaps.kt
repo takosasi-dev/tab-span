@@ -1,9 +1,13 @@
 // video/avc のデコーダーの選び方と能力: ハードウェアの物(OMX.google. と c2.android. で始まらない物)を先に、
-// 無ければ最初の物。Hello に入れる「復号できる大きさ」は候補 12 個のうち areSizeAndRateSupported が真の物。
+// 無ければ最初の物。Hello に入れる「復号できる大きさ」は、申告(areSizeAndRateSupported)が真の物に、
+// 実際に configure が通った物を足す(申告は実力より狭い端末がある。復号に失敗すれば PC が 1 段ずつ下げる)。
 package io.github.takosasidev.tabspan.video
 
+import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaCodecList
+import android.media.MediaFormat
+import android.util.Log
 
 /** 大きさとフレームレート 1 組。 */
 data class VideoMode(val width: Int, val height: Int, val fps: Int)
@@ -23,9 +27,33 @@ object AvcCaps {
         return all.firstOrNull { !it.name.startsWith("OMX.google.") && !it.name.startsWith("c2.android.") } ?: all.firstOrNull()
     }
 
+    @Volatile private var cached: Pair<String, List<VideoMode>>? = null
+
+    /** 申告が真の物と、configure が通った物の和。デコーダーを作って試すので裏のスレッドから呼ぶ。結果はプロセスの間覚える。 */
     fun supported(info: MediaCodecInfo): List<VideoMode> {
+        cached?.let { (name, modes) -> if (name == info.name) return modes }
         val video = info.getCapabilitiesForType(MIME).videoCapabilities
-        return CANDIDATES.filter { video.areSizeAndRateSupported(it.width, it.height, it.fps.toDouble()) }
+        val modes = CANDIDATES.filter { video.areSizeAndRateSupported(it.width, it.height, it.fps.toDouble()) || configures(info.name, it) }
+        cached = info.name to modes
+        return modes
+    }
+
+    private fun configures(codecName: String, m: VideoMode): Boolean {
+        var codec: MediaCodec? = null
+        return try {
+            codec = MediaCodec.createByCodecName(codecName)
+            val format = MediaFormat.createVideoFormat(MIME, m.width, m.height).apply { setInteger(MediaFormat.KEY_FRAME_RATE, m.fps) }
+            codec.configure(format, null, null, 0)
+            true
+        } catch (e: Exception) {
+            Log.i("TabSpan", "configure できない: ${m.width}x${m.height}@${m.fps} ${e.javaClass.simpleName}")
+            false
+        } finally {
+            try {
+                codec?.release()
+            } catch (_: Exception) {
+            }
+        }
     }
 
     /** "baseline" "main" "high" のうち、デコーダーが挙げた物(重なりなし)。 */

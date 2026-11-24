@@ -84,7 +84,7 @@ Phase 0 breakdown:
 
 The device is a dtab d-01J (Android 7.0).
 
-- **Delay when mirroring with the app**: at 1920x1080@30, the median delay from capture on the PC to the frame being decoded on the device was about 16 ms, with no dropped frames (software encoder on the PC). This does not include the time until the picture appears on the device's screen. If you choose 60 fps, it scales the video down to 1280x720 to stay within what the device's decoder reports (1280x800).
+- **Delay when mirroring with the app**: at 1920x1080@30, the median delay from capture on the PC to the frame being decoded on the device was about 16 ms, with no dropped frames (software encoder on the PC). This does not include the time until the picture appears on the device's screen. Since v0.1.1 the device also reports the sizes for which it could actually create a decoder, in addition to what the decoder itself reports, so on the dtab it sends 1920x1080 without scaling even at 60 fps (median about 16 ms at 1920x1080@60, no dropped frames). If decoding fails, the PC steps the size down one level at a time.
 - **TLS**: the device connected to the PC's `tls` over USB (`adb reverse`) with TLS 1.2 (ECDHE-ECDSA, AES-256-GCM).
 - **Decoding**: the device's hardware decoder (`OMX.IMG.MSVDX.Decoder.AVC`) decoded every size tried, 1280x720 to 2560x1600 at 30 fps and 60 fps, faster than real time. That includes sizes the decoder itself reports as unsupported (1920x1080@60, 1920x1200, 2560x1440, 2560x1600).
 - **Software decoder**: `OMX.google.h264.decoder` managed about 48 fps at 2560x1600, with a delay of 90 to 200 ms.
