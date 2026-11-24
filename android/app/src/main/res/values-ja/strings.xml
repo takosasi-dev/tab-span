@@ -5,7 +5,14 @@
     <string name="btn_connect">つなぐ</string>
     <string name="btn_cancel">やめる</string>
     <string name="btn_add_pc">PC を追加</string>
-    <string name="status_connecting">つないでいます…(USB)</string>
+    <string name="btn_settings">設定</string>
+    <string name="btn_back">戻る</string>
+    <string name="btn_save">保存</string>
+    <string name="status_connecting">つないでいます…</string>
+    <string name="status_route_usb">つないでいます…(USB)</string>
+    <string name="status_route_last">つないでいます…(前回のアドレス)</string>
+    <string name="status_route_manual">つないでいます…(手で入れたアドレス)</string>
+    <string name="status_route_search">PC を探しています…(LAN)</string>
     <string name="status_reconnecting">接続が切れました。つなぎ直しています…(%1$d 秒)</string>
     <string name="status_not_found">PC が見つかりません。PC の TabSpan が動いているか、USB がつながっているか、LAN 接続がオンかを確かめてください</string>
 
@@ -34,9 +41,24 @@
     <string name="video_waiting">映像を待っています…</string>
     <string name="video_paused">PC 側で画面が止まっています</string>
 
-    <string name="menu_touch">タッチ</string>
-    <string name="menu_pc_touch_off">PC 側でタッチが切られています</string>
-    <string name="menu_overlay">重ね表示</string>
+    <string name="menu_touch">タッチを PC に送る</string>
+    <string name="menu_pc_touch_off">PC 側で切られています</string>
+    <string name="menu_overlay">診断を表示</string>
     <string name="menu_disconnect">切断</string>
     <string name="menu_close">閉じる</string>
+
+    <string name="settings_title">設定</string>
+    <string name="settings_pcs">PC</string>
+    <string name="settings_no_pc">PC がまだありません</string>
+    <string name="settings_paired_on">ペアリングした日 %1$s</string>
+    <string name="settings_manual_address">アドレスを手で入れる</string>
+    <string name="settings_address_invalid">192.168.1.10 のような形で入れてください</string>
+    <string name="settings_unpair">解除</string>
+    <string name="settings_unpair_confirm">%1$s とのペアリングを解除します。もう一度使うときは『PC を追加』からやり直します</string>
+    <string name="settings_auto_connect">起動したら自動でつなぐ</string>
+    <string name="settings_share_log">ログを共有</string>
+    <string name="settings_share_confirm">ログには端末の名前と IP アドレスが入っています</string>
+    <string name="settings_share">共有する</string>
+    <string name="settings_version_title">この端末の版</string>
+    <string name="settings_version">アプリ %1$s / プロトコル %2$d</string>
 </resources>

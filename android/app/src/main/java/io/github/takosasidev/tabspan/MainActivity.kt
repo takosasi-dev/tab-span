@@ -1,7 +1,8 @@
-// 端末側の画面: ホーム・ペアリング・映像の 3 つ(Compose、固定の暗い配色)。接続の状態は Connector が持つ。
-// 映像の画面の間だけ、画面を点けたままにし、ステータスバーとナビゲーションバーを隠す(FR-20)。
+// 端末側の画面: ホーム・ペアリング・映像(下から出るメニュー)と設定(SettingsScreen.kt)。Compose、固定の暗い配色。
+// 接続の状態は Connector が持つ。映像の画面の間だけ、画面を点けたままにし、ステータスバーとナビゲーションバーを隠す(FR-20)。
 package io.github.takosasidev.tabspan
 
+import android.os.Build
 import android.os.Bundle
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -10,7 +11,11 @@ import androidx.annotation.StringRes
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -38,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
@@ -57,6 +64,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppLog.init(this)
+        AppLog.i("app ${BuildConfig.VERSION_NAME} on ${Build.MODEL} API ${Build.VERSION.SDK_INT}")
         connector = Connector.get(this)
         setContent {
             MaterialTheme(colorScheme = COLORS) {
@@ -64,12 +73,17 @@ class MainActivity : ComponentActivity() {
                 SystemBars(ui.screen == Screen.VIDEO)
                 // 映像の画面では戻る操作でメニューを出し入れする(ナビゲーションバーは引き出して使う)
                 BackHandler(enabled = ui.screen != Screen.HOME) {
-                    if (ui.screen == Screen.VIDEO) connector.setMenu(!ui.menuOpen) else connector.cancel()
+                    when (ui.screen) {
+                        Screen.VIDEO -> connector.setMenu(!ui.menuOpen)
+                        Screen.SETTINGS -> connector.closeSettings()
+                        else -> connector.cancel()
+                    }
                 }
                 when (ui.screen) {
                     Screen.HOME -> HomeScreen(ui, connector)
                     Screen.PAIRING -> PairingScreen(ui, connector)
                     Screen.VIDEO -> VideoScreen(ui, connector)
+                    Screen.SETTINGS -> SettingsScreen(ui, connector)
                 }
             }
         }
@@ -122,16 +136,22 @@ private fun HomeScreen(ui: UiState, connector: Connector) {
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).safeDrawingPadding().padding(32.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
-        if (ui.pcNames.isEmpty()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = { connector.openSettings() }) { Text(stringResource(R.string.btn_settings)) }
+        }
+        if (ui.pcs.isEmpty()) {
             Text(stringResource(R.string.home_no_pc), modifier = Modifier.widthIn(max = 640.dp), color = MaterialTheme.colorScheme.onBackground)
         } else {
-            ui.pcNames.forEach { Text(it, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground) }
+            ui.pcs.forEach { Text(it.pcName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground) }
         }
         ui.message?.let { Text(text(it), modifier = Modifier.widthIn(max = 640.dp), color = MaterialTheme.colorScheme.onBackground) }
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            if (ui.pcNames.isNotEmpty()) {
+            if (ui.pcs.isNotEmpty()) {
                 Button(onClick = { if (ui.busy) connector.cancel() else connector.connect() }) {
                     Text(stringResource(if (ui.busy) R.string.btn_cancel else R.string.btn_connect))
                 }
@@ -207,35 +227,51 @@ private fun VideoScreen(ui: UiState, connector: Connector) {
         // タッチは PC へ送る(SurfaceView の上に重ねた透明な面で受ける。座標は FitRect と同じ面)
         val currentRect by rememberUpdatedState(rect)
         if (ui.menuOpen) {
-            VideoMenu(ui, connector)
+            // シートの外を押したら閉じる(シートが出ている間はタッチを PC に送らない)
+            Box(Modifier.fillMaxSize().background(Color(0x66000000)).pointerInput(Unit) { detectTapGestures { connector.setMenu(false) } })
         } else {
             Box(Modifier.fillMaxSize().pointerInteropFilter { connector.onTouch(it, currentRect); true })
+        }
+        // 下から出るシート(A4)。別の窓を作らない(映像の間に隠したバーを出さない)
+        AnimatedVisibility(
+            visible = ui.menuOpen,
+            enter = slideInVertically { it },
+            exit = slideOutVertically { it },
+            modifier = Modifier.align(Alignment.BottomCenter),
+        ) {
+            VideoMenu(ui, connector)
         }
     }
 }
 
 @Composable
 private fun VideoMenu(ui: UiState, connector: Connector) {
-    Box(Modifier.fillMaxSize().background(Color(0x99000000)), contentAlignment = Alignment.Center) {
-        Column(
-            Modifier.widthIn(min = 280.dp, max = 400.dp).background(Color(0xFF1E1E1E), RoundedCornerShape(12.dp)).padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            MenuSwitch(R.string.menu_touch, ui.deviceTouch) { connector.setDeviceTouch(it) }
-            if (!ui.pcTouch) Text(stringResource(R.string.menu_pc_touch_off), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
-            MenuSwitch(R.string.menu_overlay, ui.showOverlay) { connector.toggleOverlay() }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = { connector.cancel() }) { Text(stringResource(R.string.menu_disconnect)) }
-                Button(onClick = { connector.setMenu(false) }) { Text(stringResource(R.string.menu_close)) }
-            }
+    Column(
+        Modifier
+            .widthIn(min = 320.dp, max = 560.dp)
+            .background(Color(0xFF1E1E1E), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+            .pointerInput(Unit) { detectTapGestures { } } // シートの上の押しは下へ通さない
+            .padding(horizontal = 24.dp, vertical = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        SettingSwitch(R.string.menu_touch, ui.deviceTouch, enabled = ui.pcTouch) { connector.setDeviceTouch(it) }
+        if (!ui.pcTouch) Text(stringResource(R.string.menu_pc_touch_off), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+        SettingSwitch(R.string.menu_overlay, ui.showOverlay) { connector.setOverlay(it) }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedButton(onClick = { connector.cancel() }) { Text(stringResource(R.string.menu_disconnect)) }
+            Button(onClick = { connector.setMenu(false) }) { Text(stringResource(R.string.menu_close)) }
         }
     }
 }
 
+/** 文言とスイッチの 1 行(A4 と A5)。 */
 @Composable
-private fun MenuSwitch(@StringRes label: Int, checked: Boolean, onChange: (Boolean) -> Unit) {
+fun SettingSwitch(@StringRes label: Int, checked: Boolean, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(stringResource(label), modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface)
-        Switch(checked = checked, onCheckedChange = onChange)
+        Text(
+            stringResource(label), modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.5f),
+        )
+        Switch(checked = checked, onCheckedChange = onChange, enabled = enabled)
     }
 }

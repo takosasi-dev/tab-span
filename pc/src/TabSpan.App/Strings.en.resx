@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App_Title" xml:space="preserve"><value>TabSpan</value></data>
+  <data name="Tab_Main" xml:space="preserve"><value>Main</value></data>
+  <data name="Tab_Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Tab_Diag" xml:space="preserve"><value>Diagnostics</value></data>
+  <data name="Tab_Guide" xml:space="preserve"><value>Getting started</value></data>
+  <data name="Main_State" xml:space="preserve"><value>Status:</value></data>
+  <data name="Main_Device" xml:space="preserve"><value>Device:</value></data>
+  <data name="Main_Video" xml:space="preserve"><value>Video:</value></data>
+  <data name="Main_Touch" xml:space="preserve"><value>Touch:</value></data>
+  <data name="Touch_Check" xml:space="preserve"><value>Control this PC with the device's touch (toggle with {0})</value></data>
+  <data name="Touch_CheckNoHotkey" xml:space="preserve"><value>Control this PC with the device's touch</value></data>
+  <data name="Touch_Unavailable" xml:space="preserve"><value>Touch input could not be prepared on this PC</value></data>
+  <data name="Touch_HotkeyFailed" xml:space="preserve"><value>Could not register the hotkey {0} (another app may be using it)</value></data>
+  <data name="Main_Disconnect" xml:space="preserve"><value>Disconnect</value></data>
+  <data name="Main_Source" xml:space="preserve"><value>Screen to show</value></data>
+  <data name="Main_AddDevice" xml:space="preserve"><value>Add device</value></data>
+  <data name="Main_Refresh" xml:space="preserve"><value>Refresh list</value></data>
+  <data name="Main_NoDevice" xml:space="preserve"><value>No device is connected</value></data>
+  <data name="Main_DeviceLine" xml:space="preserve"><value>{0}  ({1})</value></data>
+  <data name="Main_VideoLine" xml:space="preserve"><value>{0}x{1}  {2} fps  {3}</value></data>
+  <data name="Link_Usb" xml:space="preserve"><value>USB</value></data>
+  <data name="Link_Lan" xml:space="preserve"><value>LAN</value></data>
+  <data name="Encoder_Hardware" xml:space="preserve"><value>Hardware encoder</value></data>
+  <data name="Encoder_Software" xml:space="preserve"><value>Software encoder</value></data>
+  <data name="State_Waiting" xml:space="preserve"><value>Waiting</value></data>
+  <data name="State_Connected" xml:space="preserve"><value>Connected</value></data>
+  <data name="State_Streaming" xml:space="preserve"><value>Streaming</value></data>
+  <data name="State_Paused" xml:space="preserve"><value>Paused</value></data>
+  <data name="State_Problem" xml:space="preserve"><value>There is a problem</value></data>
+  <data name="Monitor_Line" xml:space="preserve"><value>{0}: {1}   {2}x{3}{4}</value></data>
+  <data name="Monitor_Primary" xml:space="preserve"><value>Primary</value></data>
+  <data name="Monitor_Virtual" xml:space="preserve"><value>Virtual</value></data>
+  <data name="Monitor_Extend" xml:space="preserve"><value>Extend</value></data>
+  <data name="Monitor_Detached" xml:space="preserve"><value>Detached. It is attached when a device connects</value></data>
+  <data name="Hint_UsbUnavailable" xml:space="preserve"><value>USB is turned off, so devices cannot be added</value></data>
+  <data name="Hint_NoDevices" xml:space="preserve"><value>No devices yet. Connect your device with USB and press [Add device]</value></data>
+  <data name="Hint_ChooseSource" xml:space="preserve"><value>Choose a screen to show</value></data>
+  <data name="Banner_Port" xml:space="preserve"><value>Port {0} is not available. Change the port in Settings</value></data>
+  <data name="Banner_PairingLost" xml:space="preserve"><value>The pairing data could not be read. Add your devices again</value></data>
+  <data name="Banner_AdbMissing" xml:space="preserve"><value>adb was not found. adb is needed to connect with USB</value></data>
+  <data name="Banner_Unauthorized" xml:space="preserve"><value>On the device, tap "Allow" for "Allow USB debugging?"</value></data>
+  <data name="Banner_ReverseFailing" xml:space="preserve"><value>Port forwarding to the device (adb reverse) keeps failing</value></data>
+  <data name="Banner_SoftwareEncoder" xml:space="preserve"><value>The hardware encoder is not available, so the CPU is compressing the video. If it is slow, lower the resolution limit</value></data>
+  <data name="Banner_CaptureError" xml:space="preserve"><value>Cannot capture the screen ({0})</value></data>
+  <data name="Banner_NoVirtual" xml:space="preserve"><value>No virtual display was found. A driver is needed to extend the desktop. Mirroring works as it is</value></data>
+  <data name="Banner_OpenSettings" xml:space="preserve"><value>Open Settings</value></data>
+  <data name="Banner_OpenGuide" xml:space="preserve"><value>Open Getting started</value></data>
+  <data name="Banner_Retry" xml:space="preserve"><value>Try again</value></data>
+  <data name="Footer" xml:space="preserve"><value>USB: {0}    LAN: {1}    Port {2}</value></data>
+  <data name="Footer_UsbOn" xml:space="preserve"><value>Listening</value></data>
+  <data name="Footer_UsbOff" xml:space="preserve"><value>Stopped</value></data>
+  <data name="Footer_LanOn" xml:space="preserve"><value>Listening</value></data>
+  <data name="Footer_LanOff" xml:space="preserve"><value>Off</value></data>
+  <data name="Pair_Title" xml:space="preserve"><value>Add device</value></data>
+  <data name="Pair_Step1" xml:space="preserve"><value>1. Connect the device with USB</value></data>
+  <data name="Pair_Step2" xml:space="preserve"><value>2. Open TabSpan on the device and tap "Add PC"</value></data>
+  <data name="Pair_Waiting" xml:space="preserve"><value>Waiting for a request from the device...  {0} left</value></data>
+  <data name="Pair_TimedOut" xml:space="preserve"><value>Time is up</value></data>
+  <data name="Pair_Request" xml:space="preserve"><value>Request from {0}. If the number matches the one on the device, press [Allow]</value></data>
+  <data name="Pair_Added" xml:space="preserve"><value>{0} was added</value></data>
+  <data name="Pair_Denied" xml:space="preserve"><value>The device was not added</value></data>
+  <data name="Pair_Full" xml:space="preserve"><value>Up to 10 devices can be registered. Remove devices you do not use in Settings</value></data>
+  <data name="Pair_UsbOnly" xml:space="preserve"><value>Pairing works only over USB</value></data>
+  <data name="Pair_Busy" xml:space="preserve"><value>Another device's request is being handled</value></data>
+  <data name="Pair_Approve" xml:space="preserve"><value>Allow</value></data>
+  <data name="Pair_Deny" xml:space="preserve"><value>Deny</value></data>
+  <data name="Pair_Retry" xml:space="preserve"><value>Try again</value></data>
+  <data name="Pair_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Tray_Waiting" xml:space="preserve"><value>TabSpan waiting</value></data>
+  <data name="Tray_Connected" xml:space="preserve"><value>TabSpan connected to {0}</value></data>
+  <data name="Tray_Streaming" xml:space="preserve"><value>TabSpan streaming to {0} ({1}x{2} {3} fps)</value></data>
+  <data name="Tray_Problem" xml:space="preserve"><value>TabSpan has a problem</value></data>
+  <data name="Tray_Open" xml:space="preserve"><value>Open</value></data>
+  <data name="Tray_Touch" xml:space="preserve"><value>Accept touch</value></data>
+  <data name="Tray_StopStreaming" xml:space="preserve"><value>Stop streaming</value></data>
+  <data name="Tray_Exit" xml:space="preserve"><value>Exit</value></data>
+  <data name="Notify_Title" xml:space="preserve"><value>TabSpan</value></data>
+  <data name="Notify_Streaming" xml:space="preserve"><value>Streaming to {0}</value></data>
+  <data name="Notify_Detached" xml:space="preserve"><value>The device disconnected, so the virtual display was removed</value></data>
+  <data name="Notify_DetachFailed" xml:space="preserve"><value>The device disconnected. Press Win + P and choose "PC screen only" to remove the hidden screen</value></data>
+  <data name="Notify_TouchOff" xml:space="preserve"><value>Touch input is off (turn it back on with {0})</value></data>
+  <data name="Notify_TouchFailed" xml:space="preserve"><value>Touch input could not be sent, so it was turned off</value></data>
+  <data name="Notify_StreamFailed" xml:space="preserve"><value>The video could not be made, so streaming stopped. See the Diagnostics tab</value></data>
+  <data name="Set_Connection" xml:space="preserve"><value>Connection</value></data>
+  <data name="Set_Usb" xml:space="preserve"><value>Connect with USB</value></data>
+  <data name="Set_AutoLaunch" xml:space="preserve"><value>Open the app on the device when it is connected with USB</value></data>
+  <data name="Set_Lan" xml:space="preserve"><value>Connect over LAN</value></data>
+  <data name="Set_LanNote" xml:space="preserve"><value>Only paired devices on the same network can connect. If Windows Firewall asks, allow private networks only</value></data>
+  <data name="Set_Port" xml:space="preserve"><value>Port</value></data>
+  <data name="Set_PortNote" xml:space="preserve"><value>Changing it disconnects the connected device</value></data>
+  <data name="Set_AdbPath" xml:space="preserve"><value>adb location</value></data>
+  <data name="Set_Browse" xml:space="preserve"><value>Browse</value></data>
+  <data name="Set_AdbAuto" xml:space="preserve"><value>Leave empty to find it automatically</value></data>
+  <data name="Set_AdbFound" xml:space="preserve"><value>Found at: {0}</value></data>
+  <data name="Set_AdbNotFound" xml:space="preserve"><value>Not found</value></data>
+  <data name="Set_Video" xml:space="preserve"><value>Video</value></data>
+  <data name="Set_Fps" xml:space="preserve"><value>Frame rate limit</value></data>
+  <data name="Set_Bitrate" xml:space="preserve"><value>Bitrate</value></data>
+  <data name="Set_BitrateValue" xml:space="preserve"><value>{0} Mbps</value></data>
+  <data name="Set_MaxEdge" xml:space="preserve"><value>Resolution limit</value></data>
+  <data name="Set_MaxEdgeAuto" xml:space="preserve"><value>Match the device</value></data>
+  <data name="Set_Detach" xml:space="preserve"><value>Remove the virtual display after the device disconnects</value></data>
+  <data name="Set_DetachSec" xml:space="preserve"><value>seconds later</value></data>
+  <data name="Set_DetachNote" xml:space="preserve"><value>When it is removed, its windows move to the remaining screens</value></data>
+  <data name="Set_Touch" xml:space="preserve"><value>Touch</value></data>
+  <data name="Set_TouchEnabled" xml:space="preserve"><value>Accept touch</value></data>
+  <data name="Set_Hotkey" xml:space="preserve"><value>Toggle hotkey</value></data>
+  <data name="Set_HotkeyFailed" xml:space="preserve"><value>This key is used elsewhere</value></data>
+  <data name="Set_Resident" xml:space="preserve"><value>Background</value></data>
+  <data name="Set_StartWithWindows" xml:space="preserve"><value>Start when Windows starts</value></data>
+  <data name="Set_Language" xml:space="preserve"><value>Language</value></data>
+  <data name="Set_LangAuto" xml:space="preserve"><value>Automatic</value></data>
+  <data name="Set_LangJa" xml:space="preserve"><value>日本語</value></data>
+  <data name="Set_LangEn" xml:space="preserve"><value>English</value></data>
+  <data name="Set_LanguageNote" xml:space="preserve"><value>Takes effect the next time TabSpan starts</value></data>
+  <data name="Set_Devices" xml:space="preserve"><value>Devices</value></data>
+  <data name="Set_DeviceName" xml:space="preserve"><value>Name</value></data>
+  <data name="Set_PairedAt" xml:space="preserve"><value>Paired</value></data>
+  <data name="Set_LastSeen" xml:space="preserve"><value>Last connected</value></data>
+  <data name="Set_Unpair" xml:space="preserve"><value>Remove</value></data>
+  <data name="Set_UnpairConfirm" xml:space="preserve"><value>Remove {0}?</value></data>
+  <data name="Set_NoDevices" xml:space="preserve"><value>No paired devices</value></data>
+  <data name="Set_ResetIdentity" xml:space="preserve"><value>Recreate this PC's key</value></data>
+  <data name="Set_ResetIdentityConfirm" xml:space="preserve"><value>All devices will be unpaired. Recreate the key?</value></data>
+  <data name="Set_ResetSettings" xml:space="preserve"><value>Restore defaults</value></data>
+  <data name="Set_ResetSettingsConfirm" xml:space="preserve"><value>Settings will be restored to their defaults. Pairings are kept</value></data>
+  <data name="Set_Range" xml:space="preserve"><value>Enter a number from {0} to {1}</value></data>
+  <data name="Diag_Latency" xml:space="preserve"><value>Latency (ms)</value></data>
+  <data name="Diag_P50" xml:space="preserve"><value>50%</value></data>
+  <data name="Diag_P95" xml:space="preserve"><value>95%</value></data>
+  <data name="Diag_CaptureToSend" xml:space="preserve"><value>Capture to send</value></data>
+  <data name="Diag_SendToArrive" xml:space="preserve"><value>Send to arrival</value></data>
+  <data name="Diag_ArriveToDecode" xml:space="preserve"><value>Arrival to decode</value></data>
+  <data name="Diag_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="Diag_Fps" xml:space="preserve"><value>Frame rate</value></data>
+  <data name="Diag_Dropped" xml:space="preserve"><value>Dropped frames</value></data>
+  <data name="Diag_DroppedValue" xml:space="preserve"><value>PC {0}  device {1}</value></data>
+  <data name="Diag_Rtt" xml:space="preserve"><value>Round trip</value></data>
+  <data name="Diag_Rate" xml:space="preserve"><value>Sent</value></data>
+  <data name="Diag_Encoder" xml:space="preserve"><value>Encoder</value></data>
+  <data name="Diag_EncoderValue" xml:space="preserve"><value>{0} ({1})</value></data>
+  <data name="Diag_Hardware" xml:space="preserve"><value>hardware</value></data>
+  <data name="Diag_Software" xml:space="preserve"><value>software</value></data>
+  <data name="Diag_Size" xml:space="preserve"><value>Size</value></data>
+  <data name="Diag_Touch" xml:space="preserve"><value>Touch injection (95%)</value></data>
+  <data name="Diag_Graph" xml:space="preserve"><value>Total over the last 60 seconds (50%, ms)</value></data>
+  <data name="Diag_Copy" xml:space="preserve"><value>Copy values</value></data>
+  <data name="Diag_NotStreaming" xml:space="preserve"><value>Shown only while streaming</value></data>
+  <data name="Guide_Intro" xml:space="preserve"><value>Finished steps are marked. TabSpan does not run commands; copy them and run them yourself</value></data>
+  <data name="Guide_Done" xml:space="preserve"><value>Done</value></data>
+  <data name="Guide_NotDone" xml:space="preserve"><value>Not yet</value></data>
+  <data name="Guide_Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Guide_Step1_Title" xml:space="preserve"><value>1. Install a virtual display (only to extend the desktop)</value></data>
+  <data name="Guide_Step1_Body" xml:space="preserve"><value>Install Virtual Display Driver. Run the following in PowerShell</value></data>
+  <data name="Guide_Step1_After" xml:space="preserve"><value>After installing, press [Refresh list]</value></data>
+  <data name="Guide_Step2_Title" xml:space="preserve"><value>2. Install adb (only to connect with USB)</value></data>
+  <data name="Guide_Step2_Body" xml:space="preserve"><value>Run the following in a normal (not administrator) PowerShell</value></data>
+  <data name="Guide_Step2_After" xml:space="preserve"><value>After installing, open PowerShell again</value></data>
+  <data name="Guide_Step3_Title" xml:space="preserve"><value>3. Allow USB debugging on the device</value></data>
+  <data name="Guide_Step3_Body" xml:space="preserve"><value>On the device: Settings &gt; About &gt; tap Build number 7 times &gt; Developer options &gt; turn on USB debugging. Connect with USB and tap "Allow" on the prompt. The location of these settings differs by model</value></data>
+  <data name="Error_AttachFailed" xml:space="preserve"><value>Could not attach the virtual display</value></data>
+</root>

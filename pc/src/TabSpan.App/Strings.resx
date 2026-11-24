@@ -13,6 +13,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="App_Title" xml:space="preserve"><value>TabSpan</value></data>
+  <data name="Tab_Main" xml:space="preserve"><value>メイン</value></data>
+  <data name="Tab_Settings" xml:space="preserve"><value>設定</value></data>
+  <data name="Tab_Diag" xml:space="preserve"><value>診断</value></data>
+  <data name="Tab_Guide" xml:space="preserve"><value>はじめに</value></data>
   <data name="Main_State" xml:space="preserve"><value>状態:</value></data>
   <data name="Main_Device" xml:space="preserve"><value>端末:</value></data>
   <data name="Main_Video" xml:space="preserve"><value>映像:</value></data>
@@ -33,6 +37,7 @@
   <data name="Encoder_Hardware" xml:space="preserve"><value>ハードウェア エンコーダー</value></data>
   <data name="Encoder_Software" xml:space="preserve"><value>ソフトウェア エンコーダー</value></data>
   <data name="State_Waiting" xml:space="preserve"><value>待機中</value></data>
+  <data name="State_Connected" xml:space="preserve"><value>接続中</value></data>
   <data name="State_Streaming" xml:space="preserve"><value>映しています</value></data>
   <data name="State_Paused" xml:space="preserve"><value>一時停止中</value></data>
   <data name="State_Problem" xml:space="preserve"><value>問題があります</value></data>
@@ -50,9 +55,16 @@
   <data name="Banner_Unauthorized" xml:space="preserve"><value>端末の画面で『USB デバッグを許可しますか』に『許可』を押してください</value></data>
   <data name="Banner_ReverseFailing" xml:space="preserve"><value>端末へのポートの転送(adb reverse)が続けて失敗しています</value></data>
   <data name="Banner_SoftwareEncoder" xml:space="preserve"><value>ハードウェアのエンコーダーを使えないため、CPU で圧縮しています。重いときは解像度の上限を下げてください</value></data>
-  <data name="Footer" xml:space="preserve"><value>USB: {0}    LAN: オフ    ポート {1}</value></data>
+  <data name="Banner_CaptureError" xml:space="preserve"><value>画面を取り込めません({0})</value></data>
+  <data name="Banner_NoVirtual" xml:space="preserve"><value>仮想ディスプレイが見つかりません。拡張で使うにはドライバが要ります。複製はこのまま使えます</value></data>
+  <data name="Banner_OpenSettings" xml:space="preserve"><value>設定を開く</value></data>
+  <data name="Banner_OpenGuide" xml:space="preserve"><value>はじめに を開く</value></data>
+  <data name="Banner_Retry" xml:space="preserve"><value>もう一度試す</value></data>
+  <data name="Footer" xml:space="preserve"><value>USB: {0}    LAN: {1}    ポート {2}</value></data>
   <data name="Footer_UsbOn" xml:space="preserve"><value>待ち受け中</value></data>
   <data name="Footer_UsbOff" xml:space="preserve"><value>止まっています</value></data>
+  <data name="Footer_LanOn" xml:space="preserve"><value>待ち受け中</value></data>
+  <data name="Footer_LanOff" xml:space="preserve"><value>オフ</value></data>
   <data name="Pair_Title" xml:space="preserve"><value>端末を追加</value></data>
   <data name="Pair_Step1" xml:space="preserve"><value>1. 端末を USB でつなぐ</value></data>
   <data name="Pair_Step2" xml:space="preserve"><value>2. 端末の TabSpan を開いて「PC を追加」を押す</value></data>
@@ -61,8 +73,104 @@
   <data name="Pair_Request" xml:space="preserve"><value>{0} からの要求です。端末に出ている番号と同じなら [許可] を押してください</value></data>
   <data name="Pair_Added" xml:space="preserve"><value>{0} を追加しました</value></data>
   <data name="Pair_Denied" xml:space="preserve"><value>追加しませんでした</value></data>
+  <data name="Pair_Full" xml:space="preserve"><value>登録できる端末は 10 台までです。設定で使わない端末を解除してください</value></data>
+  <data name="Pair_UsbOnly" xml:space="preserve"><value>ペアリングは USB でつないだときだけできます</value></data>
+  <data name="Pair_Busy" xml:space="preserve"><value>別の端末の要求を処理しています</value></data>
   <data name="Pair_Approve" xml:space="preserve"><value>許可</value></data>
   <data name="Pair_Deny" xml:space="preserve"><value>拒否</value></data>
   <data name="Pair_Retry" xml:space="preserve"><value>もう一度</value></data>
   <data name="Pair_Close" xml:space="preserve"><value>閉じる</value></data>
+  <data name="Tray_Waiting" xml:space="preserve"><value>TabSpan 待機中</value></data>
+  <data name="Tray_Connected" xml:space="preserve"><value>TabSpan {0} に接続中</value></data>
+  <data name="Tray_Streaming" xml:space="preserve"><value>TabSpan {0} に映しています({1}x{2} {3} fps)</value></data>
+  <data name="Tray_Problem" xml:space="preserve"><value>TabSpan 問題があります</value></data>
+  <data name="Tray_Open" xml:space="preserve"><value>開く</value></data>
+  <data name="Tray_Touch" xml:space="preserve"><value>タッチを受け付ける</value></data>
+  <data name="Tray_StopStreaming" xml:space="preserve"><value>映すのを止める</value></data>
+  <data name="Tray_Exit" xml:space="preserve"><value>終了</value></data>
+  <data name="Notify_Title" xml:space="preserve"><value>TabSpan</value></data>
+  <data name="Notify_Streaming" xml:space="preserve"><value>{0} に映しています</value></data>
+  <data name="Notify_Detached" xml:space="preserve"><value>端末が切れたので、仮想ディスプレイを外しました</value></data>
+  <data name="Notify_DetachFailed" xml:space="preserve"><value>端末が切れました。Win + P で「PC 画面のみ」を選ぶと、見えない画面を外せます</value></data>
+  <data name="Notify_TouchOff" xml:space="preserve"><value>タッチの受け付けを止めました({0} で戻せます)</value></data>
+  <data name="Notify_TouchFailed" xml:space="preserve"><value>タッチを送れないため、受け付けを止めました</value></data>
+  <data name="Notify_StreamFailed" xml:space="preserve"><value>映像を作れないため、映すのを止めました。診断の画面を見てください</value></data>
+  <data name="Set_Connection" xml:space="preserve"><value>つなぎ方</value></data>
+  <data name="Set_Usb" xml:space="preserve"><value>USB でつなぐ</value></data>
+  <data name="Set_AutoLaunch" xml:space="preserve"><value>USB でつないだら端末のアプリを開く</value></data>
+  <data name="Set_Lan" xml:space="preserve"><value>LAN でつなぐ</value></data>
+  <data name="Set_LanNote" xml:space="preserve"><value>同じネットワークの中の、ペアリングした端末だけがつなげます。Windows のファイアウォールの確認が出たら、プライベート ネットワークだけを許可してください</value></data>
+  <data name="Set_Port" xml:space="preserve"><value>ポート</value></data>
+  <data name="Set_PortNote" xml:space="preserve"><value>変えると、つないでいる端末は切れます</value></data>
+  <data name="Set_AdbPath" xml:space="preserve"><value>adb の場所</value></data>
+  <data name="Set_Browse" xml:space="preserve"><value>参照</value></data>
+  <data name="Set_AdbAuto" xml:space="preserve"><value>空なら自動で探します</value></data>
+  <data name="Set_AdbFound" xml:space="preserve"><value>見つけた場所: {0}</value></data>
+  <data name="Set_AdbNotFound" xml:space="preserve"><value>見つかっていません</value></data>
+  <data name="Set_Video" xml:space="preserve"><value>映像</value></data>
+  <data name="Set_Fps" xml:space="preserve"><value>フレームレートの上限</value></data>
+  <data name="Set_Bitrate" xml:space="preserve"><value>ビットレート</value></data>
+  <data name="Set_BitrateValue" xml:space="preserve"><value>{0} Mbps</value></data>
+  <data name="Set_MaxEdge" xml:space="preserve"><value>解像度の上限</value></data>
+  <data name="Set_MaxEdgeAuto" xml:space="preserve"><value>端末に合わせる</value></data>
+  <data name="Set_Detach" xml:space="preserve"><value>切れたら仮想ディスプレイを外す</value></data>
+  <data name="Set_DetachSec" xml:space="preserve"><value>秒後</value></data>
+  <data name="Set_DetachNote" xml:space="preserve"><value>外すと、その画面にあったウィンドウは残りの画面へ移ります</value></data>
+  <data name="Set_Touch" xml:space="preserve"><value>タッチ</value></data>
+  <data name="Set_TouchEnabled" xml:space="preserve"><value>タッチを受け付ける</value></data>
+  <data name="Set_Hotkey" xml:space="preserve"><value>切り替えのホットキー</value></data>
+  <data name="Set_HotkeyFailed" xml:space="preserve"><value>このキーはほかで使われています</value></data>
+  <data name="Set_Resident" xml:space="preserve"><value>常駐</value></data>
+  <data name="Set_StartWithWindows" xml:space="preserve"><value>Windows の起動時に開始する</value></data>
+  <data name="Set_Language" xml:space="preserve"><value>言語</value></data>
+  <data name="Set_LangAuto" xml:space="preserve"><value>自動</value></data>
+  <data name="Set_LangJa" xml:space="preserve"><value>日本語</value></data>
+  <data name="Set_LangEn" xml:space="preserve"><value>English</value></data>
+  <data name="Set_LanguageNote" xml:space="preserve"><value>次の起動から変わります</value></data>
+  <data name="Set_Devices" xml:space="preserve"><value>端末</value></data>
+  <data name="Set_DeviceName" xml:space="preserve"><value>名前</value></data>
+  <data name="Set_PairedAt" xml:space="preserve"><value>ペアリングした日</value></data>
+  <data name="Set_LastSeen" xml:space="preserve"><value>最後につないだ日</value></data>
+  <data name="Set_Unpair" xml:space="preserve"><value>解除</value></data>
+  <data name="Set_UnpairConfirm" xml:space="preserve"><value>{0} を解除しますか</value></data>
+  <data name="Set_NoDevices" xml:space="preserve"><value>ペアリングした端末はありません</value></data>
+  <data name="Set_ResetIdentity" xml:space="preserve"><value>この PC の鍵を作り直す</value></data>
+  <data name="Set_ResetIdentityConfirm" xml:space="preserve"><value>すべての端末のペアリングが外れます。作り直しますか</value></data>
+  <data name="Set_ResetSettings" xml:space="preserve"><value>初期値に戻す</value></data>
+  <data name="Set_ResetSettingsConfirm" xml:space="preserve"><value>設定を初期値に戻します。ペアリングは残ります</value></data>
+  <data name="Set_Range" xml:space="preserve"><value>{0}〜{1} の数字を入れてください</value></data>
+  <data name="Diag_Latency" xml:space="preserve"><value>遅延(ミリ秒)</value></data>
+  <data name="Diag_P50" xml:space="preserve"><value>50%</value></data>
+  <data name="Diag_P95" xml:space="preserve"><value>95%</value></data>
+  <data name="Diag_CaptureToSend" xml:space="preserve"><value>取り込みから送信まで</value></data>
+  <data name="Diag_SendToArrive" xml:space="preserve"><value>送信から到着まで</value></data>
+  <data name="Diag_ArriveToDecode" xml:space="preserve"><value>到着から復号まで</value></data>
+  <data name="Diag_Total" xml:space="preserve"><value>合計</value></data>
+  <data name="Diag_Fps" xml:space="preserve"><value>フレームレート</value></data>
+  <data name="Diag_Dropped" xml:space="preserve"><value>捨てたフレーム</value></data>
+  <data name="Diag_DroppedValue" xml:space="preserve"><value>PC {0}  端末 {1}</value></data>
+  <data name="Diag_Rtt" xml:space="preserve"><value>往復の時間</value></data>
+  <data name="Diag_Rate" xml:space="preserve"><value>送信量</value></data>
+  <data name="Diag_Encoder" xml:space="preserve"><value>エンコーダー</value></data>
+  <data name="Diag_EncoderValue" xml:space="preserve"><value>{0}({1})</value></data>
+  <data name="Diag_Hardware" xml:space="preserve"><value>ハードウェア</value></data>
+  <data name="Diag_Software" xml:space="preserve"><value>ソフトウェア</value></data>
+  <data name="Diag_Size" xml:space="preserve"><value>大きさ</value></data>
+  <data name="Diag_Touch" xml:space="preserve"><value>タッチの注入(95%)</value></data>
+  <data name="Diag_Graph" xml:space="preserve"><value>直近 60 秒の合計(50%、ミリ秒)</value></data>
+  <data name="Diag_Copy" xml:space="preserve"><value>数値をコピー</value></data>
+  <data name="Diag_NotStreaming" xml:space="preserve"><value>映している間だけ表示します</value></data>
+  <data name="Guide_Intro" xml:space="preserve"><value>済んだ手順には印が付きます。TabSpan はコマンドを実行しません。コピーして自分で実行してください</value></data>
+  <data name="Guide_Done" xml:space="preserve"><value>済み</value></data>
+  <data name="Guide_NotDone" xml:space="preserve"><value>まだ</value></data>
+  <data name="Guide_Copy" xml:space="preserve"><value>コピー</value></data>
+  <data name="Guide_Step1_Title" xml:space="preserve"><value>1. 仮想ディスプレイを入れる(拡張で使う人だけ)</value></data>
+  <data name="Guide_Step1_Body" xml:space="preserve"><value>Virtual Display Driver を入れます。PowerShell で次を実行してください</value></data>
+  <data name="Guide_Step1_After" xml:space="preserve"><value>入れた後、[一覧を更新] を押してください</value></data>
+  <data name="Guide_Step2_Title" xml:space="preserve"><value>2. adb を入れる(USB で使う人だけ)</value></data>
+  <data name="Guide_Step2_Body" xml:space="preserve"><value>普通の(管理者でない)PowerShell で次を実行してください</value></data>
+  <data name="Guide_Step2_After" xml:space="preserve"><value>入れた後、PowerShell を開き直してください</value></data>
+  <data name="Guide_Step3_Title" xml:space="preserve"><value>3. 端末の USB デバッグを許可する</value></data>
+  <data name="Guide_Step3_Body" xml:space="preserve"><value>端末の設定 → 端末情報 → ビルド番号を 7 回押す → 開発者向けオプション → USB デバッグをオン。USB でつなぎ、端末に出る確認で『許可』を押してください。設定の場所は機種によって違います</value></data>
+  <data name="Error_AttachFailed" xml:space="preserve"><value>仮想ディスプレイを取り付けられませんでした</value></data>
 </root>

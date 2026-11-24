@@ -1,4 +1,4 @@
-// 端末側の本体アプリ(ホーム・ペアリング・映像の 3 画面)。Compose + Material 3、固定の暗い配色。
+// 端末側の本体アプリ(ホーム・ペアリング・映像・設定の画面)。Compose + Material 3、固定の暗い配色。
 // 依存の向きは app → link、app → video。足した依存のライセンスはリポジトリ直下の THIRD-PARTY-NOTICES.md。
 plugins {
     id("com.android.application")
@@ -14,15 +14,27 @@ android {
         applicationId = "io.github.takosasidev.tabspan"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.2.0"
+        versionCode = 4
+        versionName = "0.3.0"
+    }
+
+    // 配布の鍵は環境変数で渡したときだけ使う(docs/signing.md)。鍵とパスワードをリポジトリに入れない
+    val keystore = System.getenv("TABSPAN_KEYSTORE")
+    signingConfigs {
+        if (!keystore.isNullOrEmpty()) {
+            create("release") {
+                storeFile = file(keystore)
+                storePassword = System.getenv("TABSPAN_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("TABSPAN_KEY_ALIAS")
+                keyPassword = System.getenv("TABSPAN_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            // ponytail: 配布の署名の鍵が決まるまで debug の鍵で署名する(probe と同じ)
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
     buildFeatures {

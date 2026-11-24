@@ -12,6 +12,9 @@ public sealed record DataPaths(string DataDir, string LogDir)
 
     public string Devices => Path.Combine(DataDir, "devices.json");
 
+    /// <summary>外した仮想ディスプレイと、TabSpan が付けた物(§9.2。Platform の VirtualDisplayKeeper が読み書きする)。</summary>
+    public string State => Path.Combine(DataDir, "state.json");
+
     /// <summary>既定は %APPDATA%\TabSpan と %LOCALAPPDATA%\TabSpan\logs。TABSPAN_DATA_DIR があれば &lt;dir&gt; と &lt;dir&gt;\logs。</summary>
     public static DataPaths Resolve()
     {

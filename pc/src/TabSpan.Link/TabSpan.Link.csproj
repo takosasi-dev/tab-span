@@ -9,5 +9,6 @@
   <ItemGroup>
     <!-- INV-14: 映像とタッチの型を持つ Platform は参照しない -->
     <ProjectReference Include="..\TabSpan.Core\TabSpan.Core.csproj" />
+    <InternalsVisibleTo Include="TabSpan.Link.Tests" />
   </ItemGroup>
 </Project>

@@ -4,11 +4,21 @@
     <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
     <RootNamespace>TabSpan.App</RootNamespace>
     <UseWPF>true</UseWPF>
+    <!-- P1 のトレイ(NotifyIcon)だけに使う -->
+    <UseWindowsForms>true</UseWindowsForms>
     <!-- INV-2: asInvoker。§9.8: PerMonitorV2 -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- 高 DPI は WPF のために app.manifest(PerMonitorV2)で決める。WinForms の SetHighDpiMode は使わない -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- WPF と名前がぶつかるので、WinForms と System.Drawing は暗黙の using に入れない -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TabSpan.Link\TabSpan.Link.csproj" />
     <ProjectReference Include="..\TabSpan.Platform\TabSpan.Platform.csproj" />
+    <InternalsVisibleTo Include="TabSpan.App.Smoke" />
   </ItemGroup>
 </Project>

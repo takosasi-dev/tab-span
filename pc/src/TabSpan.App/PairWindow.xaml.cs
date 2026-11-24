@@ -105,6 +105,7 @@ public partial class PairWindow : Window
         }
         else
         {
+            // まだ: LinkServer が断った理由(full / usb_only / busy)を画面へ渡す口ができたら、Pair_Full・Pair_UsbOnly・Pair_Busy の文を出す
             MessageText.Text = Strings.Get("Pair_Denied");
             RetryButton.Visibility = Visibility.Visible;
         }

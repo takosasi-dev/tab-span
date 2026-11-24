@@ -34,7 +34,14 @@ public sealed class StreamStoppedException : Exception
 
 /// <summary>1 秒ぶんの送る側の数字(serve の 1 行、画面)。</summary>
 public sealed record StreamSecond(int Frames, int KeyFrames, long Bytes, long BacklogDropped, LatencySummary CaptureToSend, LatencySummary Total,
-    int DeviceDecoded, int DeviceDropped, int Width, int Height, int Fps, string Encoder, bool HardwareEncoder);
+    int DeviceDecoded, int DeviceDropped, int Width, int Height, int Fps, string Encoder, bool HardwareEncoder)
+{
+    /// <summary>§9.9 の送信→到着(時計のずれで PC の時計に直す)。</summary>
+    public LatencySummary SendToArrive { get; init; } = new(0, 0, 0);
+
+    /// <summary>§9.9 の到着→復号(端末の時計だけで出る)。</summary>
+    public LatencySummary ArriveToDecode { get; init; } = new(0, 0, 0);
+}
 
 public sealed class MirrorStreamer
 {
@@ -54,6 +61,8 @@ public sealed class MirrorStreamer
     private readonly Dictionary<uint, (long Capture, long Send)> _sent = [];
     private readonly LatencyStats _captureToSend = new();
     private readonly LatencyStats _total = new();
+    private readonly LatencyStats _sendToArrive = new();
+    private readonly LatencyStats _arriveToDecode = new();
     private readonly Queue<(long At, int Errors)> _decoderErrors = new();
     private StreamOptions _options;
     private StreamOptions? _pendingOptions;
@@ -119,7 +128,11 @@ public sealed class MirrorStreamer
         lock (_statsLock)
         {
             var s = new StreamSecond(_frames, _keyFrames, _bytes, _backlog.Dropped, _captureToSend.TakeSecond(), _total.TakeSecond(),
-                _deviceDecoded, _deviceDropped, _plan.Width, _plan.Height, _plan.Fps, _encoderName, _hardware);
+                _deviceDecoded, _deviceDropped, _plan.Width, _plan.Height, _plan.Fps, _encoderName, _hardware)
+            {
+                SendToArrive = _sendToArrive.TakeSecond(),
+                ArriveToDecode = _arriveToDecode.TakeSecond(),
+            };
             (_frames, _keyFrames, _bytes, _deviceDecoded, _deviceDropped) = (0, 0, 0, 0, 0);
             return s;
         }
@@ -393,9 +406,11 @@ public sealed class MirrorStreamer
             _deviceDropped += stats.Dropped;
             foreach (var f in stats.Frames)
             {
+                _arriveToDecode.Add(f.DecodedUs - f.ArriveUs);
                 if (offset is { } off && _sent.TryGetValue(f.Seq, out var t))
                 {
                     // §9.9: 取り込み→送信 + 送信→到着 + 到着→復号
+                    _sendToArrive.Add(f.ArriveUs - off - t.Send);
                     _total.Add(t.Send - t.Capture + (f.ArriveUs - off - t.Send) + (f.DecodedUs - f.ArriveUs));
                 }
             }

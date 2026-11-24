@@ -22,6 +22,9 @@ public sealed class Identity : IDisposable
 
     public string PcInstanceId { get; }
 
+    /// <summary>読んだ・作った identity.bin の場所(作り直しに使う)。</summary>
+    public string FilePath { get; private set; } = "";
+
     public X509Certificate2 Certificate { get; }
 
     /// <summary>証明書の DER。ペアリングの 6 桁の計算に使う。</summary>
@@ -39,6 +42,7 @@ public sealed class Identity : IDisposable
             var loaded = TryLoad(File.ReadAllBytes(path));
             if (loaded is not null)
             {
+                loaded.FilePath = path;
                 return (loaded, false, null);
             }
 
@@ -62,7 +66,16 @@ public sealed class Identity : IDisposable
             CryptographicOperations.ZeroMemory(pfx);
         }
 
-        return (TryLoad(File.ReadAllBytes(path)) ?? throw new InvalidOperationException("作った identity.bin を読み直せない"), true, broken);
+        var created = TryLoad(File.ReadAllBytes(path)) ?? throw new InvalidOperationException("作った identity.bin を読み直せない");
+        created.FilePath = path;
+        return (created, true, broken);
+    }
+
+    /// <summary>鍵を作り直す(§10)。古いファイルは残さずに消す。呼ぶ側は台帳を空にする。</summary>
+    public static Identity Recreate(string path, IClock clock)
+    {
+        File.Delete(path);
+        return LoadOrCreate(path, clock).Identity;
     }
 
     private static Identity? TryLoad(byte[] protectedBytes)

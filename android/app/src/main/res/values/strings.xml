@@ -7,7 +7,14 @@
     <string name="btn_connect">Connect</string>
     <string name="btn_cancel">Cancel</string>
     <string name="btn_add_pc">Add PC</string>
-    <string name="status_connecting">Connecting… (USB)</string>
+    <string name="btn_settings">Settings</string>
+    <string name="btn_back">Back</string>
+    <string name="btn_save">Save</string>
+    <string name="status_connecting">Connecting…</string>
+    <string name="status_route_usb">Connecting… (USB)</string>
+    <string name="status_route_last">Connecting… (last address)</string>
+    <string name="status_route_manual">Connecting… (address you entered)</string>
+    <string name="status_route_search">Searching for the PC… (LAN)</string>
     <string name="status_reconnecting">Connection lost. Reconnecting… (%1$d s)</string>
     <string name="status_not_found">PC not found. Check that TabSpan is running on the PC, that USB is connected, and that LAN connection is on.</string>
 
@@ -36,10 +43,24 @@
     <string name="video_waiting">Waiting for video…</string>
     <string name="video_paused">The screen on the PC is paused.</string>
 
-    <string name="menu_touch">Touch</string>
-    <string name="menu_pc_touch_off">Touch is turned off on the PC.</string>
-    <string name="menu_overlay">Overlay</string>
+    <string name="menu_touch">Send touch to the PC</string>
+    <string name="menu_pc_touch_off">Turned off on the PC.</string>
+    <string name="menu_overlay">Show diagnostics</string>
     <string name="menu_disconnect">Disconnect</string>
     <string name="menu_close">Close</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_pcs">PCs</string>
+    <string name="settings_no_pc">No PC yet.</string>
+    <string name="settings_paired_on">Paired on %1$s</string>
+    <string name="settings_manual_address">Enter the address manually</string>
+    <string name="settings_address_invalid">Enter it like 192.168.1.10.</string>
+    <string name="settings_unpair">Unpair</string>
+    <string name="settings_unpair_confirm">Unpair %1$s? To use it again, pair it again with \"Add PC\".</string>
+    <string name="settings_auto_connect">Connect automatically on start</string>
+    <string name="settings_share_log">Share logs</string>
+    <string name="settings_share_confirm">The logs contain this tablet\'s name and IP addresses.</string>
+    <string name="settings_share">Share</string>
+    <string name="settings_version_title">Version of this tablet</string>
+    <string name="settings_version">App %1$s / Protocol %2$d</string>
     <string name="overlay_format" translatable="false">%1$d fps  %2$d ms  drop %3$d  %4$dx%5$d</string>
 </resources>

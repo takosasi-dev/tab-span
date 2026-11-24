@@ -4,6 +4,37 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-25
+
+Phase 4(LAN・つなぎ直し・仮想ディスプレイ)と Phase 5(常駐と画面の仕上げ)を入れ、Phase 6 の文書を足した。USB での映像とタッチは dtab d-01J で確かめた。PC の画面、LAN、仮想ディスプレイの取り付けと取り外しは、まだ実機で確かめていない(自動テストと、窓を出さない起動の確かめまで)。
+
+### Added
+
+- PC: LAN の待ち受け(設定の「LAN でつなぐ」。オフの間は 127.0.0.1 だけで待ち、UDP を開かない)と、UDP の探索への返事(ペアリング済みの端末だけ)。
+- PC: 端末の解除、この PC の鍵の作り直し。
+- PC: 仮想ディスプレイの取り付けと取り外し。外れていれば付けてから映し、切れてから `detachDelaySec` の間つなぎ直しが無ければ外して位置を `state.json` に覚え、つなぎ直したら戻す。終了のときと、強制終了の後の起動のときにも片付ける。実在のモニターには触らない。
+- PC: トレイ(4 つの状態のアイコン)、タブ(メイン・設定・診断・はじめに)、多重起動の防止、Windows の起動時に開始、英語の画面、通知、キーボードの操作。
+- PC: 診断に遅延の内訳(送信→到着、到着→復号)。
+- PC: `TabSpan.Probe serve --lan`。
+- Android: つなぐ順(USB → 前回のアドレス → 手で入れたアドレス → LAN の探索)、探索、アドレスの手入力、設定の画面(PC の解除・自動でつなぐ・診断の表示・ログの共有・版)、端末のログ(5 MB で切り替え、14 日で消す)、下から出るメニュー。権限に `ACCESS_NETWORK_STATE` を足した。
+- 文書: 導入手順(`docs/setup.ja.md`・`docs/setup.en.md`)、署名の手順(`docs/signing.md`)、測定の記録(`docs/measurements.md`)、一式を作る `tools/publish.ps1`。release の APK は、鍵を環境変数で渡したときだけ署名する。
+
+### Changed
+
+- Android: 重ね表示(診断)の既定をオフにした。
+
+### Fixed
+
+- PC: ペアリングの受け付けが時間切れになったとき、`denied` を送らずに閉じることがあった。
+
+### Known issues
+
+- PC の画面(トレイ・設定・診断・はじめに)を、まだ実機で見ていない。
+- LAN での接続と探索、仮想ディスプレイの取り付けと取り外し、2 本指のタッチ、本当の注入を、まだ実機で確かめていない。
+- PC 側でポートを変えると、端末はその PC を見つけられない(ペアリングのポートが 47815 の固定のため)。
+- PC のハードウェアの H.264 エンコーダーは、まだ通らない。APK は debug の鍵で署名した仮の物。
+
+
 ## [0.2.0] - 2026-11-24
 
 端末のタッチで PC を操作できるようになった(Phase 3)。dtab d-01J で、触った位置が PC の画面の座標に正しく直って届くこと(画面の真ん中 → 2 枚目のモニターの真ん中)、黒い余白で触り始めた指を送らないこと、長押しの間に更新を送り直すこと、PC と端末のどちらで切っても送らないことを、注入をしない形(`serve --touch log`)で確かめた。
@@ -77,7 +108,8 @@ PC の 1 枚のモニターを、USB で端末に複製して映せるように�
 - Phase 0: PC 側の測定用ツール `TabSpan.Probe` を追加(monitors / capture / encoders / encode / detach / attach / touch / adb / clock / tls)。
 - Phase 0: Android 側の測定用アプリ(probe)を追加。`video/avc` のデコーダーの一覧と候補の大きさごとの可否・configure の試し、画面の大きさ、PC の `tls` への TLS 1.2 の接続テスト(証明書の SHA-256 の指紋を表示)。結果は画面と logcat(タグ `TabSpanProbe`)に出す。adb の `am start --es action tls --ei port <N>` でも TLS のテストを始められる。
 
-[Unreleased]: https://github.com/takosasi-dev/tab-span/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/takosasi-dev/tab-span/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/takosasi-dev/tab-span/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/takosasi-dev/tab-span/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/takosasi-dev/tab-span/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/takosasi-dev/tab-span/compare/v0.0.2...v0.1.0

@@ -1,4 +1,4 @@
-// TLS の待ち受け(127.0.0.1 だけ。INV-3)と、認証までのやり取り: Hello の照合 → HelloAck、ペアリング(§9.4、INV-6)、遮断(FR-3)、2 本目の busy(FR-8)。
+// TLS の待ち受け(lanEnabled が偽なら 127.0.0.1 だけ。INV-3・FR-2)と LAN の探索(FR-5)、認証までのやり取り: Hello の照合 → HelloAck、ペアリング(§9.4、INV-6)、遮断(FR-3)、2 本目の busy(FR-8)。
 // 認証が済んだ接続だけを LinkSession にして外の処理(映像)に渡す。それより前は HelloAck・Pair*・Bye しか送らない(INV-4)。
 // 映像の型は参照しない(INV-14)。外の処理は onSession で受け、LinkSession.SendAsync で枠を差し込む。
 using System.Net;
@@ -13,6 +13,12 @@ namespace TabSpan.Link;
 public sealed record LinkOptions
 {
     public int Port { get; init; } = 47815;
+
+    /// <summary>FR-2: 真なら 0.0.0.0 で待ち、UDP の探索に返事をする。</summary>
+    public bool LanEnabled { get; init; }
+
+    /// <summary>LanEnabled のとき待つアドレス。テストだけが 127.0.0.1 に変える(0.0.0.0 で待たないため)。</summary>
+    internal IPAddress LanBindAddress { get; init; } = IPAddress.Any;
     public string PcName { get; init; } = Environment.MachineName;
     public string AppVersion { get; init; } = "0.1.0";
 
@@ -34,8 +40,10 @@ public sealed class LinkServer : IAsyncDisposable
 
     public static readonly TimeSpan PairingWindowLength = TimeSpan.FromSeconds(120);
 
-    private readonly LinkOptions _options;
-    private readonly Identity _identity;
+    private readonly List<Identity> _createdIdentities = []; // 作り直しで作った物(閉じるときに Dispose する)
+    private readonly SemaphoreSlim _gate = new(1, 1); // 待ち受けの作り直しと鍵の作り直しを 1 つずつ
+    private LinkOptions _options;
+    private Identity _identity;
     private readonly DeviceRegistry _registry;
     private readonly Action _saveRegistry;
     private readonly AuthThrottle _throttle;
@@ -46,6 +54,7 @@ public sealed class LinkServer : IAsyncDisposable
     private readonly List<Task> _connections = [];
     private TcpListener? _listener;
     private Task? _acceptLoop;
+    private DiscoveryResponder? _discovery;
     private LinkSession? _active;
     private PairingWindow? _pairing;
 
@@ -68,16 +77,141 @@ public sealed class LinkServer : IAsyncDisposable
     /// <summary>実際に待ち受けているポート(0 を渡したテスト用)。</summary>
     public int Port => (_listener?.LocalEndpoint as IPEndPoint)?.Port ?? 0;
 
+    /// <summary>今の鍵(ResetIdentityAsync で替わる)。</summary>
+    public Identity Identity => Volatile.Read(ref _identity);
+
+    /// <summary>探索の UDP の待ち場所(LAN のときだけ。テスト用)。</summary>
+    public IPEndPoint? DiscoveryEndPoint => _discovery?.LocalEndPoint;
+
     /// <summary>セッションの始まりと終わり(画面の更新用)。</summary>
     public event Action? Changed;
 
-    /// <summary>127.0.0.1:port で待ち受けを始める。ポートが使えなければ SocketException(呼ぶ側が画面に出す)。</summary>
+    /// <summary>ListenPlanner の計画どおりに待ち受けを始める。ポートが使えなければ SocketException(呼ぶ側が画面に出す)。</summary>
     public void Start()
     {
-        _listener = new TcpListener(IPAddress.Loopback, _options.Port); // INV-3: lanEnabled は Phase 4 まで偽
-        _listener.Start();
-        _log($"127.0.0.1:{Port} で待ち受けを始めた");
-        _acceptLoop = AcceptLoopAsync();
+        _gate.Wait();
+        try
+        {
+            Listen();
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <summary>
+    /// FR-2: 待ち受けを作り直す。ポートを変えたら今のセッションを、LAN を切ったら LAN から来ているセッションを Bye(user) で閉じる。
+    /// Start が失敗した後(ポートが使えない)でも呼んでよい。新しいポートが使えなければ SocketException(待ち受けは止まったまま)。
+    /// </summary>
+    public async Task ReconfigureAsync(int port, bool lanEnabled)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var portChanged = port != _options.Port;
+            await StopListeningAsync().ConfigureAwait(false);
+            _options = _options with { Port = port, LanEnabled = lanEnabled };
+            if (Active is { } active && (portChanged || (!lanEnabled && !active.IsUsb)))
+            {
+                await active.CloseAsync("user").ConfigureAwait(false);
+            }
+
+            Listen();
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <summary>FR-4: 台帳から消して保存し、その端末がつないでいれば Bye(unpaired) で閉じる。</summary>
+    public async Task UnpairAsync(string deviceId)
+    {
+        if (_registry.Remove(deviceId))
+        {
+            _saveRegistry();
+            _log("端末のペアリングを解除した");
+        }
+
+        if (Active is { } active && active.Hello.DeviceId == deviceId)
+        {
+            await active.CloseAsync("unpaired").ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>§10: 鍵を作り直して台帳を空にし、つないでいる端末を Bye(unpaired) で閉じ、新しい鍵で待ち受け直す。</summary>
+    public async Task ResetIdentityAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (Active is { } active)
+            {
+                await active.CloseAsync("unpaired").ConfigureAwait(false);
+            }
+
+            foreach (var e in _registry.Entries)
+            {
+                _registry.Remove(e.DeviceId);
+            }
+
+            _saveRegistry();
+            await StopListeningAsync().ConfigureAwait(false);
+            var fresh = Identity.Recreate(Identity.FilePath, _clock);
+            _createdIdentities.Add(fresh);
+            Volatile.Write(ref _identity, fresh);
+            _log("鍵を作り直し、台帳を空にした");
+            Listen();
+        }
+        finally
+        {
+            _gate.Release();
+        }
+
+        Changed?.Invoke();
+    }
+
+    private void Listen()
+    {
+        var plan = ListenPlanner.For(_options.LanEnabled);
+        var address = plan.Udp ? _options.LanBindAddress : plan.TcpAddress;
+        var listener = new TcpListener(address, _options.Port);
+        listener.Start();
+        if (plan.Udp)
+        {
+            var discovery = new DiscoveryResponder(new IPEndPoint(address, ((IPEndPoint)listener.LocalEndpoint).Port),
+                id => _registry.Entries.Any(e => e.DeviceId == id), Identity.PcInstanceId, () => Port, _log);
+            try
+            {
+                discovery.Start();
+            }
+            catch (SocketException)
+            {
+                listener.Stop();
+                throw;
+            }
+
+            _discovery = discovery;
+        }
+
+        _listener = listener;
+        _log($"{address}:{Port} で待ち受けを始めた{(plan.Udp ? "(UDP の探索にも返事をする)" : "")}");
+        _acceptLoop = AcceptLoopAsync(listener);
+    }
+
+    /// <summary>待ち受けと探索だけを止める。つないでいる接続は残す。</summary>
+    private async Task StopListeningAsync()
+    {
+        _listener?.Stop();
+        _listener = null;
+        if (Interlocked.Exchange(ref _discovery, null) is { } discovery)
+        {
+            await discovery.DisposeAsync().ConfigureAwait(false);
+        }
+
+        await (_acceptLoop ?? Task.CompletedTask).ConfigureAwait(false);
+        _acceptLoop = null;
     }
 
     /// <summary>
@@ -91,14 +225,14 @@ public sealed class LinkServer : IAsyncDisposable
         return window;
     }
 
-    private async Task AcceptLoopAsync()
+    private async Task AcceptLoopAsync(TcpListener listener)
     {
         while (!_stop.IsCancellationRequested)
         {
             TcpClient client;
             try
             {
-                client = await _listener!.AcceptTcpClientAsync(_stop.Token).ConfigureAwait(false);
+                client = await listener.AcceptTcpClientAsync(_stop.Token).ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException or SocketException)
             {
@@ -129,7 +263,7 @@ public sealed class LinkServer : IAsyncDisposable
                         handshake.CancelAfter(_options.HandshakeTimeout);
                         await tls.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
                         {
-                            ServerCertificate = _identity.Certificate,
+                            ServerCertificate = Identity.Certificate,
                             EnabledSslProtocols = AllowedProtocols,
                             ClientCertificateRequired = false,
                         }, handshake.Token).ConfigureAwait(false);
@@ -304,10 +438,11 @@ public sealed class LinkServer : IAsyncDisposable
 
             var clientNonce = DecodeBase64(request.ClientNonce) is { Length: 16 } n ? n : throw new FormatException("clientNonce が 16 バイトでない");
             machine.BeginPairing();
+            var identity = Identity;
             var serverNonce = RandomNumberGenerator.GetBytes(16);
             await writer.SendAsync(MessageType.PairChallenge,
-                Messages.ToJson(new PairChallengeMsg(_identity.PcInstanceId, _options.PcName, Convert.ToBase64String(serverNonce))), ct).ConfigureAwait(false);
-            var prompt = new PairingPrompt(request.DeviceId, request.DeviceName, PairingCode.Compute(_identity.CertDer, request.DeviceId, clientNonce, serverNonce));
+                Messages.ToJson(new PairChallengeMsg(identity.PcInstanceId, _options.PcName, Convert.ToBase64String(serverNonce))), ct).ConfigureAwait(false);
+            var prompt = new PairingPrompt(request.DeviceId, request.DeviceName, PairingCode.Compute(identity.CertDer, request.DeviceId, clientNonce, serverNonce));
             _log($"ペアリングの要求: {request.DeviceName}");
 
             // 決めるのを待つ間に端末が切れたら(Bye や切断)、決めるのを取り消す
@@ -323,7 +458,7 @@ public sealed class LinkServer : IAsyncDisposable
                 approved = false;
             }
 
-            var lost = watch.IsCompleted;
+            var lost = watch.IsCompletedSuccessfully && watch.Result; // 時間切れ・閉じたことで読みを取り消しただけなら、端末はまだいる
             if (!approved || decision.IsCancellationRequested)
             {
                 if (!lost)
@@ -353,16 +488,21 @@ public sealed class LinkServer : IAsyncDisposable
         }
     }
 
-    /// <summary>ペアリングの間に端末から何か来るか切れたら、決めるのを取り消す。</summary>
-    private static async Task WatchForCloseAsync(Stream stream, CancellationTokenSource decision)
+    /// <summary>ペアリングの間に端末から何か来るか切れたら、決めるのを取り消す。端末の側で終わったなら真、こちらが読みを取り消したなら偽。</summary>
+    private static async Task<bool> WatchForCloseAsync(Stream stream, CancellationTokenSource decision)
     {
+        var lost = true;
         try
         {
             await FrameCodec.ReadAsync(stream, decision.Token).ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is IOException or OperationCanceledException or ObjectDisposedException or FormatException or FrameTooLargeException or EndOfStreamException)
+        catch (Exception ex) when (ex is IOException or FormatException or FrameTooLargeException or EndOfStreamException)
         {
-            // 取り消されたか切れた。どちらでも決めるのを止める
+            // 切れた・読めない物が来た
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException)
+        {
+            lost = false; // 時間切れ・受け付けを閉じた・サーバーを止めた
         }
 
         try
@@ -373,10 +513,12 @@ public sealed class LinkServer : IAsyncDisposable
         {
             // ペアリングの処理はもう終わっている(接続を閉じたので読みが終わった)
         }
+
+        return lost;
     }
 
     private byte[] Ack(bool ok, string? reason) =>
-        Messages.ToJson(new HelloAckMsg(ok, reason, _identity.PcInstanceId, _options.PcName, _options.AppVersion, _options.TouchEnabled()));
+        Messages.ToJson(new HelloAckMsg(ok, reason, Identity.PcInstanceId, _options.PcName, _options.AppVersion, _options.TouchEnabled()));
 
     private static byte[]? DecodeBase64(string? text)
     {
@@ -396,6 +538,11 @@ public sealed class LinkServer : IAsyncDisposable
     {
         await _stop.CancelAsync().ConfigureAwait(false);
         _listener?.Stop();
+        if (Interlocked.Exchange(ref _discovery, null) is { } discovery)
+        {
+            await discovery.DisposeAsync().ConfigureAwait(false);
+        }
+
         Interlocked.Exchange(ref _pairing, null)?.Dispose();
         if (Active is { } active)
         {
@@ -416,6 +563,11 @@ public sealed class LinkServer : IAsyncDisposable
         {
             // 終わらない接続があっても、終了は止めない(_stop は取り消し済みなので、残りはそのうち止まる)
             _log("5 秒で閉じ終わらない接続を残して終わる");
+        }
+
+        foreach (var created in _createdIdentities)
+        {
+            created.Dispose();
         }
     }
 

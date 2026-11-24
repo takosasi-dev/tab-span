@@ -1,5 +1,7 @@
 EnumDisplayDevices
 EnumDisplaySettingsEx
+ChangeDisplaySettingsEx
+DISP_CHANGE
 EnumDisplayMonitors
 GetMonitorInfo
 MONITORINFOEXW

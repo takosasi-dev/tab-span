@@ -49,22 +49,23 @@ class LinkSocket private constructor(private val raw: Socket, private val tls: S
         const val PORT = 47815
         private val EMPTY = ByteArray(0)
         private const val CONNECT_TIMEOUT_MS = 3_000
+        val LOOPBACK: InetAddress = InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))
 
         /**
-         * 127.0.0.1:[port] へつなぐ。[trusted] が null ならペアリング用(証明書を受け入れる)、
-         * そうでなければ指紋(16 進)の集まりで、どれとも合わなければ FingerprintMismatchException。
+         * [host]:[port] へつなぐ(既定は 127.0.0.1。LAN でも TLS と指紋の照合は同じ)。[trusted] が null ならペアリング用
+         * (証明書を受け入れる)、そうでなければ指紋(16 進)の集まりで、どれとも合わなければ FingerprintMismatchException。
          */
-        fun connect(port: Int, trusted: Set<String>?, readTimeoutMs: Int): LinkSocket {
+        fun connect(port: Int, trusted: Set<String>?, readTimeoutMs: Int, host: InetAddress = LOOPBACK): LinkSocket {
             val trust = PinningTrustManager(trusted)
             val context = SSLContext.getInstance("TLSv1.2")
             context.init(null, arrayOf(trust), null)
             val raw = Socket()
             try {
-                // 名前の解決を通さず、ループバックの番地をそのまま使う
-                raw.connect(InetSocketAddress(InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1)), port), CONNECT_TIMEOUT_MS)
+                // 名前の解決を通さず、番地をそのまま使う
+                raw.connect(InetSocketAddress(host, port), CONNECT_TIMEOUT_MS)
                 raw.tcpNoDelay = true
                 raw.soTimeout = readTimeoutMs
-                val tls = context.socketFactory.createSocket(raw, "127.0.0.1", port, true) as SSLSocket
+                val tls = context.socketFactory.createSocket(raw, host.hostAddress, port, true) as SSLSocket
                 tls.enabledProtocols = arrayOf("TLSv1.2")
                 try {
                     tls.startHandshake() // 明示で呼ぶ(getSession だけだと失敗が例外にならない)

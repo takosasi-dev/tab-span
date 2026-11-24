@@ -4,6 +4,7 @@ using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using TabSpan.Core;
 
 namespace TabSpan.Link.Tests;
@@ -70,6 +71,17 @@ public sealed class LinkServerTests
         var all = string.Join("\n", h.Logs);
         Assert.DoesNotContain(Convert.ToBase64String(token), all, StringComparison.Ordinal);
         Assert.DoesNotContain(Convert.ToHexString(token), all, StringComparison.OrdinalIgnoreCase);
+        // 秘密鍵は書き出せない形で読まれているので、identity.bin を解いた PFX から書き出せる形で読み直す
+        var plain = ProtectedData.Unprotect(File.ReadAllBytes(h.Identity.FilePath), null, DataProtectionScope.CurrentUser);
+        var pfx = plain[(8 + BinaryPrimitives.ReadInt32BigEndian(plain.AsSpan(4)))..];
+        using var exportable = X509CertificateLoader.LoadPkcs12(pfx, null, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.EphemeralKeySet);
+        using var key = exportable.GetECDsaPrivateKey()!;
+        var secret = key.ExportParameters(includePrivateParameters: true).D!;
+        foreach (var bytes in new[] { secret, key.ExportPkcs8PrivateKey(), pfx })
+        {
+            Assert.DoesNotContain(Convert.ToBase64String(bytes), all, StringComparison.Ordinal);
+            Assert.DoesNotContain(Convert.ToHexString(bytes), all, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     [Fact]

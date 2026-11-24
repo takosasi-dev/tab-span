@@ -139,6 +139,21 @@ public sealed class MirrorStreamerTests
     }
 
     [Fact]
+    public async Task Stats_give_send_to_arrive_and_arrive_to_decode()
+    {
+        var frames = 0;
+        await using var rig = new Rig(() => Interlocked.Increment(ref frames) <= 1);
+        var v = Messages.ParseVideoFrame((await rig.NextAsync(MessageType.VideoFrame)).Payload);
+        rig.Streamer.TakeSecond(); // 送るまでの分を捨てる
+        var arrive = v.SendUs + 7_000; // 時計のずれは 0
+        rig.Streamer.OnFrame(new Frame((byte)MessageType.Stats, Messages.ToJson(new StatsMsg(1, 0, 0, [new FrameTiming(v.Seq, arrive, arrive + 5_000)]))));
+        var s = rig.Streamer.TakeSecond();
+        Assert.Equal(new LatencySummary(1, 7_000, 7_000), s.SendToArrive);
+        Assert.Equal(new LatencySummary(1, 5_000, 5_000), s.ArriveToDecode);
+        Assert.Equal(v.SendUs - v.CaptureUs + 12_000, s.Total.P50Us);
+    }
+
+    [Fact]
     public async Task Request_keyframe_on_a_still_screen_reencodes_the_last_picture()
     {
         var frames = 0;

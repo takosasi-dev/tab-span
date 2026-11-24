@@ -1,6 +1,6 @@
 // serve: 窓を出さずに、App と同じ部品(Link・Platform)で待ち受けて映す(契約 §6)。呼び出し元の E2E の確かめ用。
 // ペアリングは --pair で 120 秒受け付け、端末と同じ 6 桁が --approve-code(無ければ標準入力の 1 行)で渡された時だけ許可する。
-// 1 秒ごとに状態を 1 行出す。終わる時に Bye(shutdown) と reverse --remove。置き場は TABSPAN_DATA_DIR で切り替えられる。
+// --lan で 0.0.0.0 で待ち、UDP の探索に返事をする(FR-2・FR-5。設定の lanEnabled は見ない)。1 秒ごとに状態を 1 行出す。終わる時に Bye(shutdown) と reverse --remove。置き場は TABSPAN_DATA_DIR で切り替えられる。
 // タッチは既定で使わない。--touch log は注入せずに、注入するはずの接点を標準出力に出す(ファイルのログには座標を書かない。FR-28)。
 // --touch inject は本当に注入する(人が手で動かすとき)。どちらも標準入力の t で有効と無効を切り替え、端末へ Notice(touchEnabled) を送る。
 using System.Globalization;
@@ -14,9 +14,9 @@ namespace TabSpan.Probe;
 
 internal static class ServeCommand
 {
-    private const string Usage = "serve [--monitor \\\\.\\DISPLAYn] [--fps 30|60] [--bitrate <Mbps>] [--seconds <N>] [--pair] [--approve-code <6桁>] [--no-adb] [--software] [--touch log|inject]";
+    private const string Usage = "serve [--monitor \\\\.\\DISPLAYn] [--fps 30|60] [--bitrate <Mbps>] [--seconds <N>] [--pair] [--approve-code <6桁>] [--no-adb] [--software] [--touch log|inject] [--lan]";
 
-    private sealed record Options(string? Monitor, int? Fps, int? Bitrate, int Seconds, bool Pair, string? ApproveCode, bool NoAdb, bool Software, string? Touch);
+    private sealed record Options(string? Monitor, int? Fps, int? Bitrate, int Seconds, bool Pair, string? ApproveCode, bool NoAdb, bool Software, string? Touch, bool Lan);
 
     internal static int Run(string[] args)
     {
@@ -35,7 +35,7 @@ internal static class ServeCommand
         string? monitor = null, code = null, touch = null;
         int? fps = null, bitrate = null;
         int seconds = 0;
-        bool pair = false, noAdb = false, software = false;
+        bool pair = false, noAdb = false, software = false, lan = false;
         for (var i = 0; i < args.Length; i++)
         {
             string? Next() => i + 1 < args.Length ? args[++i] : null;
@@ -50,12 +50,13 @@ internal static class ServeCommand
                 case "--approve-code": code = Next(); if (code is not { Length: 6 } || !code.All(char.IsAsciiDigit)) { return null; } break;
                 case "--no-adb": noAdb = true; break;
                 case "--software": software = true; break;
+                case "--lan": lan = true; break;
                 case "--touch": touch = Next(); if (touch is not ("log" or "inject")) { return null; } break;
                 default: return null;
             }
         }
 
-        return new Options(monitor, fps, bitrate, seconds, pair, code, noAdb, software, touch);
+        return new Options(monitor, fps, bitrate, seconds, pair, code, noAdb, software, touch, lan);
     }
 
     private static async Task<int> RunAsync(Options o)
@@ -192,7 +193,7 @@ internal static class ServeCommand
             }
         }
 
-        var server = new LinkServer(new LinkOptions { Port = settings.Port, AppVersion = typeof(ServeCommand).Assembly.GetName().Version?.ToString(3) ?? "0.0.0", TouchEnabled = () => touch?.Enabled ?? false },
+        var server = new LinkServer(new LinkOptions { Port = settings.Port, LanEnabled = o.Lan, AppVersion = typeof(ServeCommand).Assembly.GetName().Version?.ToString(3) ?? "0.0.0", TouchEnabled = () => touch?.Enabled ?? false },
             identity, registry, Save, new AuthThrottle(clock), clock, log.Write, OnSession);
         try
         {
@@ -284,7 +285,7 @@ internal static class ServeCommand
             }
         }
 
-        Console.WriteLine($"127.0.0.1:{server.Port} で待ち受けています。Ctrl+C か q で終わります");
+        Console.WriteLine($"{(o.Lan ? "0.0.0.0" : "127.0.0.1")}:{server.Port} で待ち受けています{(o.Lan ? "(UDP の探索にも返事をします)" : "")}。Ctrl+C か q で終わります");
         try
         {
             while (!quit.IsCancellationRequested)
